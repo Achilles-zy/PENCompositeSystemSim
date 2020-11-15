@@ -47,7 +47,7 @@ PENRunAction::PENRunAction(PENPrimaryGeneratorAction* gen, PENDetectorConstructi
   analysisManager->FinishNtuple(0);
 
   analysisManager->CreateNtuple("PhotonCount", "PhotonCoutnt");
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < 100; i++) {
 	  G4String Ntuplename = "SiPMPhotonCount" + std::to_string(i);
 	  analysisManager->CreateNtupleIColumn(1, Ntuplename);
   }

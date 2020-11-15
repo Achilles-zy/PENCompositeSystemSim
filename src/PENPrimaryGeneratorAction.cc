@@ -55,11 +55,13 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 			G4double Radius = fDetCons->GetWireRadius();
 			G4double Length = fDetCons->GetWireLength();
 			G4ThreeVector WirePos = fDetCons->GetWirePos();
-			G4cout << "==========================Primary Info==========================" << G4endl;
-			G4cout << "Wire Position: " << WirePos << G4endl;
-			G4cout << "Wire Radius: " << Radius << G4endl;
-			G4cout << "Wire Length: " << Length << G4endl;
-			G4cout << "================================================================" << G4endl;
+			
+			//G4cout << "==========================Primary Info==========================" << G4endl;
+			//G4cout << "Wire Position: " << WirePos << G4endl;
+			//G4cout << "Wire Radius: " << Radius << G4endl;
+			//G4cout << "Wire Length: " << Length << G4endl;
+			//G4cout << "================================================================" << G4endl;
+
 			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
 			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
@@ -73,10 +75,14 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		else if (SrcType == "PENShell") {
 			G4double Radius = fDetCons->GetPENShellRadius();
 			G4double Length = fDetCons->GetPENShellLength();
-			G4cout << "==========================Primary Info==========================" << G4endl;
-			G4cout << "Sample Region Radius: " << Radius << G4endl;
-			G4cout << "Sample Region Length: " << Length << G4endl;
-			G4cout << "================================================================" << G4endl;
+
+			if (G4RunManager::GetRunManager()->GetRunManagerType() == 1) {
+				G4cout << "==========================Primary Info==========================" << G4endl;
+				G4cout << "Sample Region Radius: " << Radius << G4endl;
+				G4cout << "Sample Region Length: " << Length << G4endl;
+				G4cout << "================================================================" << G4endl;
+			}
+
 			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
 			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
