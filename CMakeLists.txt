@@ -68,10 +68,7 @@ set(PENCompositeSystemSim_SCRIPTS
   #filegen_point_source.py
   #scan.c
   vis.mac
-  batch-A1Wire-1-Radio.mac
-  batch-A2Wire-1-Radio.mac
-  batch-A1Wire-2-Radio.mac
-  batch-A2Wire-2-Radio.mac
+  batch-SelfVeto.mac
   src1.mac
   )
 

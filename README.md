@@ -16,26 +16,6 @@ But if necessary you can basically put any string in the file name with this cmd
 
 
 
-9/25
-
-root file name: Wiretype_Confine info_Layer number_Run ID
-
-/PEN/det/set/layernumber layerNb(int)
-
-current options: 1,2
-
-Set PEN shell layer number
-
-Default confinement of src is Wire
-
-
-
-9/29
-
-Added Veto-possible Event Count and Detectable Count
-
-
-
 10/19
 
 Merged the function of self veto simulation and active veto simulation
@@ -69,16 +49,6 @@ Current option: CDEX/LEGEND
 /PEN/run/refresh IfRefresh(bool)
 
 Set if refresh the output txt, works for LEGEND mode
-
-
-
-/LEGEND/readout/angle Angle(Readout angle in degree)
-
-
-
-/LEGEND/src/pos Srcpos(string)
-
-current options: Side/Bottom/Shroud
 
 
 
