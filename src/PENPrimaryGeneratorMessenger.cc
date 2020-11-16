@@ -24,8 +24,7 @@ PENPrimaryGeneratorMessenger::PENPrimaryGeneratorMessenger(PENPrimaryGeneratorAc
   : G4UImessenger(),
     fAction(Gun),
     fSrcDir(0),
-    cmdSetSrcType(0),
-    cmdLENGENDSetSrcPos(0)
+    cmdSetSrcType(0)
 {
   fSrcDir = new G4UIdirectory("/PEN/src/");
   fSrcDir->SetGuidance("PrimaryGenerator control");
@@ -43,7 +42,6 @@ PENPrimaryGeneratorMessenger::PENPrimaryGeneratorMessenger(PENPrimaryGeneratorAc
 PENPrimaryGeneratorMessenger::~PENPrimaryGeneratorMessenger()
 {
   delete cmdSetSrcType;
-  delete cmdLENGENDSetSrcPos;
   delete fSrcDir;
 
 }

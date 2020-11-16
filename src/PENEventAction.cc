@@ -67,8 +67,6 @@ void PENEventAction::BeginOfEventAction(const G4Event* evt)
  
 void PENEventAction::EndOfEventAction(const G4Event* evt)
 {
-
-
   auto analysisManager = G4AnalysisManager::Instance();
   analysisManager->FillH1(0, edepBulk);
   analysisManager->FillH1(1, TotalSiPMPhotonCount);
@@ -80,6 +78,7 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
   {
       for (int j = 0; j < columnnb; j++)
       {
+          //G4cout << SiPMPhotonCount[i][j] << " ";
           G4int NtupleColumnID = i * columnnb + j;
           analysisManager->FillNtupleIColumn(1, NtupleColumnID, TotalSiPMPhotonCount);
           if (SiPMPhotonCount[i][j] > PhotonCut_0) {
@@ -95,22 +94,28 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
               SignalSiPMCount_3++;
           }
       }
+      //G4cout<<G4endl;
   }
+  //G4cout << "Matrix End" << G4endl;
 
   analysisManager->FillNtupleIColumn(1, 0, TotalSiPMPhotonCount);
   analysisManager->AddNtupleRow(1);
   //G4cout << SiPMPhotonCount << G4endl;
 
 	if (edepBulk > 0 && SignalSiPMCount_0 >= MinSignalSiPMCount) {
+        //G4cout << "SignalSiPMCount0Ture" << G4endl;
 		run->CountVetoEvent();
     }
     if (edepBulk > 0 && SignalSiPMCount_1 >= MinSignalSiPMCount) {
+        //G4cout << "SignalSiPMCount1Ture" << G4endl;
         run->CountVetoEvent_1();
     }
     if (edepBulk > 0 && SignalSiPMCount_2 >= MinSignalSiPMCount) {
+        //G4cout << "SignalSiPMCount2Ture" << G4endl;
         run->CountVetoEvent_2();
     }
     if (edepBulk > 0 && SignalSiPMCount_3 >= MinSignalSiPMCount) {
+        //G4cout << "SignalSiPMCount3Ture" << G4endl;
         run->CountVetoEvent_3();
     }
 

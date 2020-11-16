@@ -90,9 +90,18 @@ void PENRunAction::BeginOfRunAction(const G4Run* aRun)
   G4int RunID = aRun->GetRunID();
   G4String fileName;
   if (fDetCons->GetMode() == "Unit") {
-	  fileName = fDetCons->GetWireType() + "_" + fDetCons->GetConfine() + "_" + std::to_string(RunID);
-	  filename = fileName;
-	  txtname = fDetCons->GetWireType() + "_" + fDetCons->GetConfine();
+	  if (fPrimaryGenerator->GetSrcType() == "PENShell") {
+		  //fileName = "Unit_" + fDetCons->GetConfine() + "_" + std::to_string(RunID);
+		  fileName = "Unit_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType();
+		  filename = fileName;
+		  txtname = "Unit_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType();
+	  }
+	  else if (fPrimaryGenerator->GetSrcType() == "Wire") {
+		  //fileName = "Unit_" + fDetCons->GetConfine() + "_" + fDetCons->GetWireType() + "_" + std::to_string(RunID);
+		  fileName = "Unit_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType() + "_" + fDetCons->GetWireType();
+		  filename = fileName;
+		  txtname = "Unit_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType() + fDetCons->GetWireType();
+	  }
   }
 
   //analysisManager->OpenFile(fileName);
@@ -129,9 +138,13 @@ void PENRunAction::EndOfRunAction(const G4Run* aRun)
   if (fDetCons->GetMode() == "Unit") {
 	  CDEXOutput(aRun);
   }
+  else if (fDetCons->GetMode() == "Array") {
+	  CDEXOutput(aRun);
+  }
   else {
 	  G4cout << "ERRRO! Mode does not exsist, nothing to output!" << G4endl;
   }
+
   ifRefresh = false;
   G4String fileName0 = filename + ".root";
   G4String fileName1 = filename + "_" + fPrimaryGenerator->GetPrimaryName() + ".root";
@@ -169,10 +182,18 @@ void PENRunAction::CDEXOutput(const G4Run* aRun) {
 		std::ofstream output;
 		if (aRun->GetRunID() == 0) {
 			output.open(txtname + ".txt", std::ios::ate);
+			if (fPrimaryGenerator->GetSrcType() == "PENShell") {
+				output 
+					<< "Source Distribution:\t"<< "PENShell" << G4endl;
+			}
+			else if (fPrimaryGenerator->GetSrcType() == "Wire") {
+				output
+					<< "Source Distribution:\t" << "Wire" << G4endl
+					<< "Wire Type:\t" << fDetCons->GetWireType() << G4endl;
+			}
 			output
-				<< "Wire Type:\t" << fDetCons->GetWireType() << G4endl
-				<< "Confine Info:\t" << fDetCons->GetConfine() << G4endl
-				<< "Simulation result:" << G4endl;
+				//<< "Confine Info:\t" << fDetCons->GetConfine() << G4endl
+				<< "Simulation Result:" << G4endl;
 		}
 		else
 		{

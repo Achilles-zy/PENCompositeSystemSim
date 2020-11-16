@@ -111,7 +111,7 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius * 2);
 		fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
 
-		//fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("PENShell");
+		fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("PENShell");
 	}
 
     fPENGPS->GeneratePrimaryVertex(anEvent);

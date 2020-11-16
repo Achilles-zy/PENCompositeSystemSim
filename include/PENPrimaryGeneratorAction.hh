@@ -29,6 +29,10 @@ public:
         SrcType = type;
     }
 
+    G4String GetSrcType() {
+        return SrcType;
+    }
+
 private:
     G4double PrimaryE;
     G4String PrimaryName;

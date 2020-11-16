@@ -85,7 +85,7 @@ PENDetectorConstruction::PENDetectorConstruction():
 	fRES = 1.0;
 	fLY = 3500. / MeV;
 	fABSFile = "PEN_ABS";
-	fConfine = "Wire";
+	fConfine = "PENShell";
 	fType = "A1";
 	fMode = "Unit";
 	fWirePos = G4ThreeVector();
@@ -883,14 +883,15 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
   SiPM_LN2_5 = dynamic_cast <G4OpticalSurface*>(SiPM_LN2_LBS_5->GetSurface(physEnv, physSiPM5)->GetSurfaceProperty());
  // SiPM_LN2_P = dynamic_cast <G4OpticalSurface*>(SiPM_LN2_LBS_P->GetSurface(physEnv, physSiPMP)->GetSurfaceProperty());
 
-  PEN_LN2->SetType(dielectric_dielectric);
+  PEN_LN2->SetType(dielectric_LUTDAVIS);
+  //PEN_LN2->SetType(dielectric_dielectric);
   Ge_LN2->SetType(dielectric_metal);
-  SiPM_LN2_0->SetType(dielectric_dielectric);
-  SiPM_LN2_1->SetType(dielectric_dielectric);
-  SiPM_LN2_2->SetType(dielectric_dielectric);
-  SiPM_LN2_3->SetType(dielectric_dielectric);
-  SiPM_LN2_4->SetType(dielectric_dielectric);
-  SiPM_LN2_5->SetType(dielectric_dielectric);
+  SiPM_LN2_0->SetType(dielectric_LUTDAVIS);
+  SiPM_LN2_1->SetType(dielectric_LUTDAVIS);
+  SiPM_LN2_2->SetType(dielectric_LUTDAVIS);
+  SiPM_LN2_3->SetType(dielectric_LUTDAVIS);
+  SiPM_LN2_4->SetType(dielectric_LUTDAVIS);
+  SiPM_LN2_5->SetType(dielectric_LUTDAVIS);
  // SiPM_LN2_P->SetType(dielectric_dielectric);
 
   PEN_LN2->SetModel(DAVIS);
@@ -904,7 +905,7 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
   //SiPM_LN2_P->SetModel(DAVIS);
 
   PEN_LN2->SetFinish(Polished_LUT);
-  Ge_LN2->SetFinish(Detector_LUT);
+  Ge_LN2->SetFinish(polished);
   SiPM_LN2_0->SetFinish(Detector_LUT);
   SiPM_LN2_1->SetFinish(Detector_LUT);
   SiPM_LN2_2->SetFinish(Detector_LUT);
