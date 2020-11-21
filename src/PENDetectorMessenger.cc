@@ -26,11 +26,14 @@ PENDetectorMessenger::PENDetectorMessenger(PENDetectorConstruction* Det)
 	fPENDir(0),
 	fDetDir(0),
 	cmdSetWireType(0),
+	cmdSetReflectorType(0),
 	cmdSetConfine(0),
 	cmdSetRunInfo(0),
 	cmdSetLayerNb(0),
 	cmdSetReadoutAngle(0),
-	cmdSetPENPropertiesID(0)
+	cmdSetPENPropertiesID(0),
+	cmdSetOuterReflector(0),
+	cmdSetInnerReflector(0)
 {
 	fDetDir = new G4UIdirectory("/PEN/cons/set");
 	fDetDir->SetGuidance("Set construction parameters");
@@ -62,11 +65,29 @@ PENDetectorMessenger::PENDetectorMessenger(PENDetectorConstruction* Det)
 	cmdSetWireType->AvailableForStates(G4State_PreInit, G4State_Idle);
 	cmdSetWireType->SetToBeBroadcasted(false);
 
+	cmdSetReflectorType = new G4UIcmdWithAString("/PEN/cons/set/reflectortype", this);
+	cmdSetReflectorType->SetGuidance("Select reflector type.");
+	cmdSetReflectorType->SetParameterName("ReflectorType", false);
+	cmdSetReflectorType->AvailableForStates(G4State_PreInit, G4State_Idle);
+	cmdSetReflectorType->SetToBeBroadcasted(false);
+
 	cmdSetPENPropertiesID = new G4UIcmdWithAnInteger("/PEN/mat/set/PENpropertiesID", this);
 	cmdSetPENPropertiesID->SetGuidance("Set PEN properties ID");
 	cmdSetPENPropertiesID->SetParameterName("ID", false);
 	cmdSetPENPropertiesID->AvailableForStates(G4State_PreInit, G4State_Idle);
 	cmdSetPENPropertiesID->SetToBeBroadcasted(false);
+
+	cmdSetOuterReflector = new G4UIcmdWithABool("/PEN/cons/set/outerreflector", this);
+	cmdSetOuterReflector->SetGuidance("Enable/disable outer reflective surface on OuterPENShell.");
+	cmdSetOuterReflector->SetParameterName("ifReflcetor", false);
+	cmdSetOuterReflector->AvailableForStates(G4State_PreInit, G4State_Idle);
+	cmdSetOuterReflector->SetToBeBroadcasted(false);
+
+	cmdSetInnerReflector = new G4UIcmdWithABool("/PEN/cons/set/innerreflector", this);
+	cmdSetInnerReflector->SetGuidance("Enable/disable inner reflective surface on OuterPENShell.");
+	cmdSetInnerReflector->SetParameterName("ifReflcetor", false);
+	cmdSetInnerReflector->AvailableForStates(G4State_PreInit, G4State_Idle);
+	cmdSetInnerReflector->SetToBeBroadcasted(false);
 
 }
 
@@ -77,9 +98,12 @@ PENDetectorMessenger::~PENDetectorMessenger()
 	delete fDetDir;
 	delete fPENDir;
 	delete cmdSetWireType;
+	delete cmdSetReflectorType;
 	delete cmdSetConfine;
 	delete cmdSetRunInfo;
 	delete cmdSetPENPropertiesID;
+	delete cmdSetOuterReflector;
+	delete cmdSetInnerReflector;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -88,6 +112,10 @@ void PENDetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
 {
 	if (command == cmdSetWireType) {
 		fDetCons->SetWireType(newValue);
+	}
+
+	if (command == cmdSetReflectorType) {
+		fDetCons->SetReflectorType(newValue);
 	}
 
 	if (command == cmdSetRunInfo) {
@@ -104,5 +132,13 @@ void PENDetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
 
 	if (command == cmdSetPENPropertiesID) {
 		fDetCons->SetPENPropertiesID(cmdSetPENPropertiesID->GetNewIntValue(newValue));
+	}
+
+	if (command == cmdSetOuterReflector) {
+		fDetCons->SetOuterReflector(cmdSetOuterReflector->GetNewBoolValue(newValue));
+	}
+
+	if (command == cmdSetInnerReflector) {
+		fDetCons->SetInnerReflector(cmdSetInnerReflector->GetNewBoolValue(newValue));
 	}
 }

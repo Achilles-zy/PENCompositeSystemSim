@@ -56,9 +56,9 @@
 using namespace std;
 PENDetectorConstruction::PENDetectorConstruction():
 	G4VUserDetectorConstruction(),
-    PENShell(nullptr),
-	Env(nullptr),
-	Bulk(nullptr),
+	physEnv(nullptr),
+	physBulk(nullptr),
+	physPENShell(nullptr),
     physSiPM0(nullptr),
     physSiPM1(nullptr),
     physSiPM2(nullptr),
@@ -73,8 +73,10 @@ PENDetectorConstruction::PENDetectorConstruction():
 	physSiPMArray1(nullptr),
 	physSiPMArray2(nullptr),
 	physSiPMArray3(nullptr),
+	physOuterReflector(nullptr),
+	physInnerReflector(nullptr),
 	physWire(nullptr),
-	//physPENShell(nullptr),
+	physSArBrick(nullptr),
 	//logicPENShell(nullptr),
 	solidSideSiPM(nullptr)
 {
@@ -86,8 +88,9 @@ PENDetectorConstruction::PENDetectorConstruction():
 	fLY = 3500. / MeV;
 	fABSFile = "PEN_ABS";
 	fConfine = "PENShell";
-	fType = "A1";
-	fMode = "Unit";
+	fWireType = "A1";
+	fReflectorType = "ESR";
+	fMode = "SArUnit";
 	fWirePos = G4ThreeVector();
 	fWireRadius = 0.7 * mm;
 	fWireLength = 20 * cm;
@@ -98,12 +101,17 @@ PENDetectorConstruction::PENDetectorConstruction():
 	fPENPropertiesID = 1;
 	fBEGeRadius = 40 * mm;
 	fBEGeHeight = 40 * mm;
+	fSArBrickHeight = 150 * cm;
+	fSArBrickRadius = 40 * cm;
 	absFactor = 1.5;
 	fDetMat = matEnGe;
 	G4cout << "Start Construction" << G4endl;
 	DefineMat();
 	fTargetMaterial = G4Material::GetMaterial("PVT_structure");
 	fGlassMaterialPMT = G4Material::GetMaterial("BorosilicateGlass");
+	ifOuterReflector = false;
+	ifInnerReflector = false;
+	CheckOverlaps = true;
 }
 
 PENDetectorConstruction::~PENDetectorConstruction()
@@ -111,7 +119,7 @@ PENDetectorConstruction::~PENDetectorConstruction()
 }
 
 void PENDetectorConstruction::SetWireType(G4String type) {
-	fType = type;
+	fWireType = type;
 	G4RunManager::GetRunManager()->ReinitializeGeometry();
 }
 
@@ -135,6 +143,20 @@ void PENDetectorConstruction::SetPENPropertiesID(G4int nb) {
 	G4RunManager::GetRunManager()->ReinitializeGeometry();
 }
 
+void PENDetectorConstruction::SetOuterReflector(G4bool ref) {
+	ifOuterReflector = ref;
+	G4RunManager::GetRunManager()->ReinitializeGeometry();
+}
+
+void PENDetectorConstruction::SetInnerReflector(G4bool ref) {
+	ifInnerReflector = ref;
+	G4RunManager::GetRunManager()->ReinitializeGeometry();
+}
+
+void PENDetectorConstruction::SetReflectorType(G4String type) {
+	fReflectorType = type;
+	G4RunManager::GetRunManager()->ReinitializeGeometry();
+}
 
 void PENDetectorConstruction::DefineMat() 
 {
@@ -251,7 +273,7 @@ void PENDetectorConstruction::DefineMat()
 	MPT_PEN->AddProperty("FASTCOMPONENT", PEN_WL_ENERGY, PEN_EMISSION, line_count)->SetSpline(true);
 	MPT_PEN->AddProperty("SLOWCOMPONENT", PEN_WL_ENERGY, PEN_EMISSION, line_count)->SetSpline(true);
 
-	MPT_PEN->AddConstProperty("SCINTILLATIONYIELD", fLY / MeV); // * 2.5 * PEN = PS, 10*PEN=PS
+	MPT_PEN->AddConstProperty("SCINTILLATIONYIELD", fLY); // * 2.5 * PEN = PS, 10*PEN=PS
 	MPT_PEN->AddConstProperty("RESOLUTIONSCALE", fRES); // * 1, 4, 8
 	MPT_PEN->AddConstProperty("FASTTIMECONSTANT", 5.198 * ns);
 	MPT_PEN->AddConstProperty("SLOWTIMECONSTANT", 24.336 * ns);
@@ -485,7 +507,7 @@ void PENDetectorConstruction::SetABS(G4double value) {
 
 void PENDetectorConstruction::SetLY(G4double ly) {
 
-	MPT_PEN->AddConstProperty("SCINTILLATIONYIELD", ly / MeV); // * 2.5 * PEN = PS, 10*PEN=PS
+	MPT_PEN->AddConstProperty("SCINTILLATIONYIELD", ly); // * 2.5 * PEN = PS, 10*PEN=PS
 //G4RunManager::GetRunManager()->PhysicsHasBeenModified();
 #ifdef G4MULTITHREADED
 	G4MTRunManager::GetRunManager()->PhysicsHasBeenModified();
@@ -494,34 +516,10 @@ void PENDetectorConstruction::SetLY(G4double ly) {
 #endif
 }
 
-G4VPhysicalVolume* PENDetectorConstruction::Construct()
-{
-	if (fPENPropertiesID == 0) {
-		fLY = 6000. / MeV;
-		absFactor = 1.5;
-	}
-	else if (fPENPropertiesID == 1) {
-		fLY = 3500. / MeV;
-		absFactor = 2.58;
-	}
-	else if (fPENPropertiesID == 2) {
-		fLY = 6000. / MeV;
-		absFactor = 6.44;
-	}
-	SetABS(absFactor);
-	SetLY(fLY);
+////////
+//
+////////
 
-	if (fMode == "Unit") {
-		return ConstructUnit();
-	}
-	if (fMode == "Array") {
-		return ConstructArray();
-	}
-	else {
-		G4cout << "Error: Mode not fount!" << G4endl;
-	}
-
-}
 
 G4LogicalVolume* PENDetectorConstruction::ConstructBEGe() {
 
@@ -599,11 +597,10 @@ G4LogicalVolume* PENDetectorConstruction::ConstructBEGe() {
 	//outer pLayer
 	auto OuterpLayer = new G4Tubs("solidOuterpLayer", 0, grooveradius - groovedepth, outerplayerthickness / 2, 0, twopi);
 	auto logicOuterpLayer = new G4LogicalVolume(OuterpLayer, matEnGe, "OuterpLayer");
-	auto physBulk = new G4PVPlacement(0, G4ThreeVector(), logicBulk, "Bulk", logicTotalCrystal, false, 0, checkOverlaps);
+	physBulk = new G4PVPlacement(0, G4ThreeVector(), logicBulk, "Bulk", logicTotalCrystal, false, 0, checkOverlaps);
 	//new G4PVPlacement(0, G4ThreeVector(), logicOuterDeadlayer, "OuterDeadlayer", logicTotalCrystal, false, 0, checkOverlaps);
 	//new G4PVPlacement(0, zbulkTransOuterp, logicOuterpLayer, "OuterpLayer", logicTotalCrystal, false, 0, checkOverlaps);
 	//new G4PVPlacement(0, zTransGroove, logicGrooveLayer, "GrooveLayer", logicTotalCrystal, false, 0, checkOverlaps);
-	Bulk = physBulk;
 	return logicTotalCrystal;
 }
 
@@ -692,12 +689,14 @@ G4LogicalVolume* PENDetectorConstruction::ConstructA2(G4double WireLength) {
 }
 
 G4LogicalVolume* PENDetectorConstruction::ConstructPENShell() {
-	auto innermesh = CADMesh::TessellatedMesh::FromSTL("../models/InnerShell.stl");
+	auto innermesh = CADMesh::TessellatedMesh::FromSTL("../models/InnerShell-I.stl");
 	auto outermesh = CADMesh::TessellatedMesh::FromSTL("../models/OuterShell-II.stl");
 	G4VSolid* solidInnerShell = innermesh->GetSolid();
 	G4VSolid* solidOuterShell = outermesh->GetSolid();
-	G4ThreeVector position1 = G4ThreeVector(0., -4 * mm, 0.);
-	auto solidPENShell = new G4UnionSolid("solidPENShell", solidInnerShell, solidOuterShell, 0, position1);
+	//G4ThreeVector position1 = G4ThreeVector(0., -4 * mm, 0.);
+	//auto solidPENShell = new G4UnionSolid("solidPENShell", solidInnerShell, solidOuterShell, 0, position1);
+	G4ThreeVector position1 = G4ThreeVector(0., 4 * mm, 0.);
+	auto solidPENShell = new G4UnionSolid("solidPENShell", solidOuterShell, solidInnerShell, 0, position1);
 
 	/*
 	G4MultiUnion* solidPENShell = new G4MultiUnion("solidPENShell");
@@ -723,6 +722,34 @@ G4LogicalVolume* PENDetectorConstruction::ConstructPENShell() {
 	return logicPENShell;
 }
 
+G4LogicalVolume* PENDetectorConstruction::ConstructOuterReflector() {
+	auto outermesh = CADMesh::TessellatedMesh::FromSTL("../models/OuterShell-II.stl");
+	G4VSolid* solidOuterShell = outermesh->GetSolid();
+	//G4ThreeVector position1 = G4ThreeVector(0., -4 * mm, 0.);
+	//auto solidPENShell = new G4UnionSolid("solidPENShell", solidInnerShell, solidOuterShell, 0, position1);
+
+	auto reflectormesh = CADMesh::TessellatedMesh::FromSTL("../models/OuterShell-II-OuterReflector.stl");
+	G4VSolid* solidTemp = reflectormesh->GetSolid();
+	auto solidReflector = new G4SubtractionSolid("solidReflector", solidTemp, solidOuterShell, 0, G4ThreeVector());
+	auto logicReflector = new G4LogicalVolume(solidReflector, matLN2, "logicReflector");
+	return logicReflector;
+
+}
+
+G4LogicalVolume* PENDetectorConstruction::ConstructInnerReflector() {
+	auto outermesh = CADMesh::TessellatedMesh::FromSTL("../models/OuterShell-II.stl");
+	G4VSolid* solidOuterShell = outermesh->GetSolid();
+	//G4ThreeVector position1 = G4ThreeVector(0., -4 * mm, 0.);
+	//auto solidPENShell = new G4UnionSolid("solidPENShell", solidInnerShell, solidOuterShell, 0, position1);
+
+	auto reflectormesh = CADMesh::TessellatedMesh::FromSTL("../models/OuterShell-II-InnerReflector.stl");
+	G4VSolid* solidTemp = reflectormesh->GetSolid();
+	auto solidReflector = new G4SubtractionSolid("solidReflector", solidTemp, solidOuterShell, 0, G4ThreeVector());
+	auto logicReflector = new G4LogicalVolume(solidReflector, matLN2, "logicReflector");
+	return logicReflector;
+
+}
+
 G4LogicalVolume* PENDetectorConstruction::ConstructInnerShell() {
 }
 
@@ -730,8 +757,20 @@ G4LogicalVolume* PENDetectorConstruction::ConstructOuterShell() {
 
 }
 
-G4LogicalVolume* PENDetectorConstruction::ConstructSArContainer() {
+G4LogicalVolume* PENDetectorConstruction::ConstructSArBrick() {
+	auto SArCrystalmesh = CADMesh::TessellatedMesh::FromSTL("../models/SArCrystal-II.stl");
+	auto SArBrickmesh = CADMesh::TessellatedMesh::FromSTL("../models/SArContainer-II-solid.stl");
+	G4VSolid* solidSArCrystal = SArCrystalmesh->GetSolid();
+	G4VSolid* solidSArBrick = SArBrickmesh->GetSolid();
 
+	auto solidSArContainer = new G4SubtractionSolid("solidSArCrystal", solidSArBrick, solidSArCrystal, 0, G4ThreeVector(0, 1 * cm, 0));
+	auto logicSArBrick = new G4LogicalVolume(solidSArBrick, matPEN, "logicSArBrick");
+	auto logicSArCrystal = new G4LogicalVolume(solidSArCrystal, matLAr, "logicSArCrystal");
+	//auto logicSArContainer = new G4LogicalVolume(solidSArCrystal, matPEN, "logicSArContainer");
+
+	auto physSArCrystal = new G4PVPlacement(0, G4ThreeVector(0, 1 * cm, 0), logicSArCrystal, "SArCrystal", logicSArBrick, false, 0, CheckOverlaps);
+	//auto physSArContainer = new G4PVPlacement(0, G4ThreeVector(), logicSArContainer, "SArContainer", logicSArBrick, false, 0, CheckOverlaps);
+	return logicSArBrick;
 }
 
 G4LogicalVolume* PENDetectorConstruction::ConstructSiPMArray() {
@@ -751,6 +790,10 @@ G4LogicalVolume* PENDetectorConstruction::ConstructSiPMArray() {
 	physSiPM2 = new G4PVPlacement(0, G4ThreeVector(offset1, -offset2, 0), logicSiPM, "physSiPM2", logicSiPMArray, false, 2, CheckOverlaps);
 	physSiPM3 = new G4PVPlacement(0, G4ThreeVector(-offset1, -offset2, 0), logicSiPM, "physSiPM3", logicSiPMArray, false, 3, CheckOverlaps);
 	return logicSiPMArray;
+}
+
+G4LogicalVolume* PENDetectorConstruction::ConstructSArSiPM() {
+
 }
 
 G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
@@ -786,14 +829,14 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 
   G4Box* solidEnv = new G4Box("solidEnvelope",  0.5 * env_size, 0.5 * env_size, 0.5 * env_size);
   G4LogicalVolume* logicEnv = new G4LogicalVolume(solidEnv, env_mat, "logicEnvelope");
-  auto physEnv = new G4PVPlacement(0, G4ThreeVector(), logicEnv, "Envelope", logicWorld, false, 0, checkOverlaps);
+  physEnv = new G4PVPlacement(0, G4ThreeVector(), logicEnv, "Envelope", logicWorld, false, 0, checkOverlaps);
 
   G4LogicalVolume* logicTotalCrystal = ConstructBEGe();
   auto physDet = new G4PVPlacement(0, G4ThreeVector(), logicTotalCrystal, "PhysDet", logicEnv, false, 0, checkOverlaps);
   
   //========================PEN shell and wire paremeters========================//
 
-  G4String WireType = fType;
+  G4String WireType = fWireType;
   G4double wireradius = 0.7 * mm;
   G4double LN2Gap = 0.5 * mm;
   G4double ShellThickness = 1 * cm;
@@ -837,7 +880,62 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
   auto rotPENShell = new G4RotationMatrix();
   rotPENShell->rotateX(90 * degree);
   G4LogicalVolume* logicPENShell = ConstructPENShell();
-  physPENShell = new G4PVPlacement(rotPENShell, G4ThreeVector(0, 0, 31.1 * mm), logicPENShell, "PENShell", logicEnv, false, 0, checkOverlaps);
+  physPENShell = new G4PVPlacement(rotPENShell, G4ThreeVector(0, 0, 35.1 * mm), logicPENShell, "PENShell", logicEnv, false, 0, checkOverlaps);
+
+  //Reflector
+  if (ifOuterReflector == true) {
+	  G4LogicalVolume* logicReflector = ConstructOuterReflector();
+	  physOuterReflector = new G4PVPlacement(rotPENShell, G4ThreeVector(0, 0, 35.1 * mm), logicReflector, "Reflector", logicEnv, false, 0, checkOverlaps);
+
+	  //Reflector
+	  G4OpticalSurface* PEN_OuterReflector = new G4OpticalSurface("PEN_Reflector");
+	  G4LogicalBorderSurface* PEN_OuterReflector_LBS = new G4LogicalBorderSurface("PEN_LN2_LBS", physOuterReflector, physPENShell, PEN_OuterReflector);
+	  PEN_OuterReflector = dynamic_cast <G4OpticalSurface*>(PEN_OuterReflector_LBS->GetSurface(physOuterReflector, physPENShell)->GetSurfaceProperty());
+	  PEN_OuterReflector->SetType(dielectric_LUTDAVIS);
+	  PEN_OuterReflector->SetModel(DAVIS);
+	  if (fReflectorType == "ESR") {
+		  PEN_OuterReflector->SetFinish(PolishedESR_LUT);
+	  }
+	  else if (fReflectorType == "ESRGrease") {
+		  PEN_OuterReflector->SetFinish(PolishedESRGrease_LUT);
+	  }
+	  else if (fReflectorType == "Teflon") {
+		  PEN_OuterReflector->SetFinish(PolishedTeflon_LUT);
+	  }
+	  else {
+		  G4cout << "Reflector type not found! Using default ESR LUT." << G4endl;
+		  PEN_OuterReflector->SetFinish(PolishedESR_LUT);
+	  }
+
+  }
+
+  if (ifInnerReflector == true) {
+	  G4LogicalVolume* logicReflector = ConstructInnerReflector();
+	  physInnerReflector = new G4PVPlacement(rotPENShell, G4ThreeVector(0, 0, 35.1 * mm), logicReflector, "Reflector", logicEnv, false, 0, checkOverlaps);
+
+	  //Reflector
+	  G4OpticalSurface* PEN_InnerReflector = new G4OpticalSurface("PEN_Reflector");
+	  G4LogicalBorderSurface* PEN_InnerReflector_LBS = new G4LogicalBorderSurface("PEN_LN2_LBS", physInnerReflector, physPENShell, PEN_InnerReflector);
+	  PEN_InnerReflector = dynamic_cast <G4OpticalSurface*>(PEN_InnerReflector_LBS->GetSurface(physInnerReflector, physPENShell)->GetSurfaceProperty());
+	  PEN_InnerReflector->SetType(dielectric_LUTDAVIS);
+	  PEN_InnerReflector->SetModel(DAVIS);
+	  PEN_InnerReflector->SetFinish(PolishedESR_LUT);
+	  if (fReflectorType == "ESR") {
+		  PEN_InnerReflector->SetFinish(PolishedESR_LUT);
+	  }
+	  else if (fReflectorType == "ESRGrease") {
+		  PEN_InnerReflector->SetFinish(PolishedESRGrease_LUT);
+	  }
+	  else if (fReflectorType == "Teflon") {
+		  PEN_InnerReflector->SetFinish(PolishedTeflon_LUT);
+	  }
+	  else {
+		  G4cout << "Reflector type not found! Using default ESR LUT." << G4endl;
+		  PEN_InnerReflector->SetFinish(PolishedESR_LUT);
+	  }
+	  //
+  }
+
 
 
   //=============================================================//
@@ -853,6 +951,8 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 
   physSiPMArray0 = new G4PVPlacement(rotSiPM0, G4ThreeVector(-167 * mm, 0, 0 * mm), logicSiPMArray, "SiPMArray0", logicEnv, false, 0, checkOverlaps);
   physSiPMArray1 = new G4PVPlacement(rotSiPM0, G4ThreeVector(167 * mm, 0, 0 * mm), logicSiPMArray, "SiPMArray1", logicEnv, false, 1, checkOverlaps);
+
+
 
   G4OpticalSurface* PEN_LN2 = new G4OpticalSurface("PEN_LN2");
   G4OpticalSurface* Ge_LN2 = new G4OpticalSurface("Ge_LN2");
@@ -940,14 +1040,77 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
   SiPM_LN2_4->SetMaterialPropertiesTable(SIPM_MPT_Surf);
   SiPM_LN2_5->SetMaterialPropertiesTable(SIPM_MPT_Surf);
 
-  //Bulk = physBulk;
-  //PENShell = physPENShell;
-  Env = physEnv;
-
-
   return physWorld;
 }
 
-G4VPhysicalVolume* PENDetectorConstruction::ConstructArray() {
+G4VPhysicalVolume* PENDetectorConstruction::ConstructSArUnit() {
+
+	G4NistManager* nist = G4NistManager::Instance();
+	G4bool checkOverlaps = true;
+
+	G4Material* world_mat = fVacuum;
+	G4Material* env_mat = matLN2;
+	G4Material* det_mat = matEnGe;
+
+	// World&Envelope
+	G4double world_size = 450 * cm;
+	G4double env_size = 400 * cm;
+	G4Box* solidWorld = new G4Box("solidWorld", 0.5 * world_size, 0.5 * world_size, 0.5 * world_size);
+	G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, world_mat, "logicWorld");
+	G4VPhysicalVolume* physWorld =
+		new G4PVPlacement(0,                     //no rotation
+			G4ThreeVector(),       //at (0,0,0)
+			logicWorld,            //its logical volume
+			"World",               //its name
+			0,                     //its mother  volume
+			false,                 //no boolean operation
+			0,                     //copy number
+			checkOverlaps);        //overlaps checking
+
+	G4Box* solidEnv = new G4Box("solidEnvelope", 0.5 * env_size, 0.5 * env_size, 0.5 * env_size);
+	G4LogicalVolume* logicEnv = new G4LogicalVolume(solidEnv, env_mat, "logicEnvelope");
+	physEnv = new G4PVPlacement(0, G4ThreeVector(), logicEnv, "Envelope", logicWorld, false, 0, checkOverlaps);
+
+	G4LogicalVolume* logicSArBrick = ConstructSArBrick();
+	auto rotSArBrick= new G4RotationMatrix();
+	rotSArBrick->rotateX(-90 * degree);
+	physSArBrick = new G4PVPlacement(rotSArBrick, G4ThreeVector(), logicSArBrick, "SArBrick", logicEnv, false, 0, checkOverlaps);
+	
+	return physWorld;
+}
+
+G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
+
+}
+
+G4VPhysicalVolume* PENDetectorConstruction::Construct()
+{
+	if (fPENPropertiesID == 0) {
+		fLY = 6000. / MeV;
+		absFactor = 1.5;
+	}
+	else if (fPENPropertiesID == 1) {
+		fLY = 3500. / MeV;
+		absFactor = 2.58;
+	}
+	else if (fPENPropertiesID == 2) {
+		fLY = 6000. / MeV;
+		absFactor = 6.44;
+	}
+	SetABS(absFactor);
+	SetLY(fLY);
+
+	if (fMode == "Unit") {
+		return ConstructUnit();
+	}
+	if (fMode == "SArUnit") {
+		return ConstructSArUnit();
+	}
+	if (fMode == "Array_1") {
+		return ConstructArray_1();
+	}
+	else {
+		G4cout << "Error: Mode not fount!" << G4endl;
+	}
 
 }

@@ -35,6 +35,7 @@ public:
 
 private:
     G4double PrimaryE;
+    G4double InitialE;
     G4String PrimaryName;
     G4String SrcType;
     G4String LEGENDSrcPos;

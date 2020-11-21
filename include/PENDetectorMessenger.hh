@@ -33,12 +33,16 @@ private:
     G4UIdirectory* fDetDir;
 
     G4UIcmdWithAString* cmdSetWireType;
+    G4UIcmdWithAString* cmdSetReflectorType;
     G4UIcmdWithAString* cmdSetConfine;
     G4UIcmdWithAString* cmdSetRunInfo;
     G4UIcmdWithAString* cmdSetMode;
     G4UIcmdWithAnInteger* cmdSetLayerNb;
-    G4UIcmdWithADouble* cmdSetReadoutAngle;
     G4UIcmdWithAnInteger* cmdSetPENPropertiesID;
+    G4UIcmdWithADouble* cmdSetReadoutAngle;
+    G4UIcmdWithABool* cmdSetOuterReflector;
+    G4UIcmdWithABool* cmdSetInnerReflector;
+
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

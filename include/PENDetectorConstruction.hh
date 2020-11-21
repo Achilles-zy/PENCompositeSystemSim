@@ -34,7 +34,8 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
 
         G4VPhysicalVolume* Construct();
         G4VPhysicalVolume* ConstructUnit();
-        G4VPhysicalVolume* ConstructArray();
+        G4VPhysicalVolume* ConstructSArUnit();
+        G4VPhysicalVolume* ConstructArray_1();
 
         G4LogicalVolume* ConstructOuterShell();
         G4LogicalVolume* ConstructInnerShell();
@@ -42,19 +43,24 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4LogicalVolume* ConstructBEGe();
         G4LogicalVolume* ConstructA1(G4double WireLength);
         G4LogicalVolume* ConstructA2(G4double WireLength);
-        G4LogicalVolume* ConstructSArContainer();
-
+        G4LogicalVolume* ConstructSArBrick();
+        G4LogicalVolume* ConstructOuterReflector();
+        G4LogicalVolume* ConstructInnerReflector();
         G4LogicalVolume* ConstructSiPMArray();
+        G4LogicalVolume* ConstructSArSiPM();
 
         void DefineMat();
 
         void SetABS(G4double);
         void SetLY(G4double);
         void SetWireType(G4String);
+        void SetReflectorType(G4String);
         void SetConfine(G4String);
         void SetRunInfo(G4String);
         void SetMode(G4String);
         void SetPENPropertiesID(G4int);
+        void SetOuterReflector(G4bool);
+        void SetInnerReflector(G4bool);
 
         //void SetLayerNbS(G4String);
 
@@ -71,7 +77,7 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         }
 
         G4String GetWireType() {
-            return fType;
+            return fWireType;
         }
 
         G4String GetConfine() {
@@ -98,11 +104,19 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
             return fPENShellRadius;
         }
 
+        G4double GetSArBrickRadius() {
+            return fSArBrickRadius;
+        }
+
+        G4double GetSArBrickHeight() {
+            return fSArBrickHeight;
+        }
+
 
     private:
-        G4VPhysicalVolume* PENShell;
-		G4VPhysicalVolume* Bulk;
-        G4VPhysicalVolume* Env;
+        G4VPhysicalVolume* physSArBrick;
+		G4VPhysicalVolume* physBulk;
+        G4VPhysicalVolume* physEnv;
         G4VPhysicalVolume* physSiPM0;
         G4VPhysicalVolume* physSiPM1;
         G4VPhysicalVolume* physSiPM2;
@@ -121,6 +135,8 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
 
         G4VPhysicalVolume* physWire;
         G4VPhysicalVolume* physPENShell;
+        G4VPhysicalVolume* physOuterReflector;
+        G4VPhysicalVolume* physInnerReflector;
         //G4LogicalVolume* logicPENShell;
         G4Tubs* solidSideSiPM;
 
@@ -175,7 +191,8 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4Material* fDetMat;
 
         G4String fABSFile;
-        G4String fType;
+        G4String fWireType;
+        G4String fReflectorType;
         G4String fConfine;
         G4String fRunInfo;
         G4String fMode;
@@ -189,24 +206,28 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4double absFactor;
         G4double fBEGeRadius;
         G4double fBEGeHeight;
+        G4double fSArBrickHeight;
+        G4double fSArBrickRadius;
         PENDetectorMessenger* fDetectorMessenger;
         G4bool CheckOverlaps;
+        G4bool ifOuterReflector;
+        G4bool ifInnerReflector;
         
 };
 
 inline const G4VPhysicalVolume* PENDetectorConstruction::GetPENShell() const
 {
-    return PENShell;
+    return physPENShell;
 }
 
 inline const G4VPhysicalVolume* PENDetectorConstruction::GetBulk() const
 {
-	return Bulk;
+	return physBulk;
 }
 
 inline const G4VPhysicalVolume* PENDetectorConstruction::GetEnv() const
 {
-    return Env;
+    return physEnv;
 }
 
 inline const G4VPhysicalVolume* PENDetectorConstruction::GetSiPM(G4int i) const

@@ -15,15 +15,15 @@
 PENPrimaryGeneratorAction::PENPrimaryGeneratorAction(PENDetectorConstruction* det):
 	G4VUserPrimaryGeneratorAction(),
 	PrimaryE(0),
+	InitialE(1 * keV),
 	PrimaryName(""),
-	SrcType("PENShell")
+	SrcType("Crystal")
 {
     fPENGPS = new G4GeneralParticleSource();
 	fPrimaryMessenger = new PENPrimaryGeneratorMessenger(this);
 	fDetCons = det;
 	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
 	G4String particleName = "e-";
-	G4double particleEnergy = 0.1 * MeV;
 	fPENGPS->SetParticleDefinition(particleTable->FindParticle(particleName));
 
 	/*
@@ -92,26 +92,68 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("PENShell");
 		}
-
+		else if (SrcType == "Point") {
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Point");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(G4ThreeVector(0, 0, 25 * mm));
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEmax(InitialE);
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEmin(InitialE);
+		}
 		else {
-			G4cout << "Error: Src type not found!" << G4endl;
+			G4cout << "Error: Src type not found! Using Geant4 default settings." << G4endl;
+		}
+	}
+	else if (mode == "SArUnit") {
+		if (SrcType == "Crystal") {
+			G4double Radius = fDetCons->GetSArBrickRadius();
+			G4double Length = fDetCons->GetSArBrickHeight();
+			if (G4RunManager::GetRunManager()->GetRunManagerType() == 1) {
+				G4cout << "==========================Primary Info==========================" << G4endl;
+				G4cout << "Sample Region Radius: " << Radius << G4endl;
+				G4cout << "Sample Region Length: " << Length << G4endl;
+				G4cout << "================================================================" << G4endl;
+			}
+
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(G4ThreeVector(0, 0, 75 * cm));
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
+
+			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("SArCrystal");
+		}
+
+		//Needs to be fixed
+		/*
+		else if (SrcType == "Container") {
+			G4double Radius = fDetCons->GetSArBrickRadius();
+			G4double Length = fDetCons->GetSArBrickHeight();
+			if (G4RunManager::GetRunManager()->GetRunManagerType() == 1) {
+				G4cout << "==========================Primary Info==========================" << G4endl;
+				G4cout << "Sample Region Radius: " << Radius << G4endl;
+				G4cout << "Sample Region Length: " << Length << G4endl;
+				G4cout << "================================================================" << G4endl;
+			}
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(G4ThreeVector(0, 0, Length / 2));
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
+
+			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("SArContainer");
+		}
+		*/
+		else {
+			G4cout << "Error: Src type not found! Using Geant4 default settings." << G4endl;
 		}
 	}
 	else {
-		G4double Radius = fDetCons->GetPENShellRadius();
-		G4double Length = fDetCons->GetPENShellLength();
-		G4cout << "==========================Primary Info==========================" << G4endl;
-		G4cout << "Sample Region Radius: " << Radius << G4endl;
-		G4cout << "Sample Region Length: " << Length << G4endl;
-		G4cout << "================================================================" << G4endl;
-		fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
-		fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
-		fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
-		fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
-		fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius * 2);
-		fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
-
-		fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("PENShell");
+		G4cout << "Error: Mode not found! Using Geant4 default settings." << G4endl;
 	}
 
     fPENGPS->GeneratePrimaryVertex(anEvent);

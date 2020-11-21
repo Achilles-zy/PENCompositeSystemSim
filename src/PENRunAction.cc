@@ -141,6 +141,9 @@ void PENRunAction::EndOfRunAction(const G4Run* aRun)
   else if (fDetCons->GetMode() == "Array") {
 	  CDEXOutput(aRun);
   }
+  else if (fDetCons->GetMode() == "SArUnit") {
+	  CDEXOutput(aRun);
+  }
   else {
 	  G4cout << "ERRRO! Mode does not exsist, nothing to output!" << G4endl;
   }

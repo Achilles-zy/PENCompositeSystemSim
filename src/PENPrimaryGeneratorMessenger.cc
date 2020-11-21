@@ -34,7 +34,6 @@ PENPrimaryGeneratorMessenger::PENPrimaryGeneratorMessenger(PENPrimaryGeneratorAc
   cmdSetSrcType->SetParameterName("SrcType",true);
   cmdSetSrcType->SetDefaultValue("Wire");
   cmdSetSrcType->AvailableForStates(G4State_PreInit, G4State_Idle);
-
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -43,7 +42,6 @@ PENPrimaryGeneratorMessenger::~PENPrimaryGeneratorMessenger()
 {
   delete cmdSetSrcType;
   delete fSrcDir;
-
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -53,7 +51,6 @@ void PENPrimaryGeneratorMessenger::SetNewValue(G4UIcommand* command, G4String ne
   if(command == cmdSetSrcType) {
   	fAction->SetSrcType(newValue);
   }
-
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

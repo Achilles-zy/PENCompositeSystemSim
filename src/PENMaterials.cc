@@ -375,7 +375,7 @@ void PENMaterials::Construct()
     const G4int NUMENTRIES_LN2 = 11;
     G4double LN2_PP[NUMENTRIES_LN2] = { hc / 545. * eV, hc / 520. * eV, hc / 495. * eV, hc / 480. * eV, hc / 467. * eV, hc / 450. * eV, hc / 431. * eV, hc / 425. * eV, hc / 419. * eV,hc / 412. * eV,hc / 407. * eV };
     G4double LN2_RefractiveIndex[NUMENTRIES_LN2] = { 1.2053, 1.2053, 1.2053, 1.2053, 1.2053, 1.2053, 1.2053, 1.2053, 1.2053, 1.2053, 1.2053 };
-    G4double LN2_AbsorptionLength[NUMENTRIES_LN2] = { 50 * cm, 50 * cm,50 * cm ,50 * cm ,50 * cm ,50 * cm ,50 * cm ,50 * cm ,50 * cm ,50 * cm ,50 * cm };
+    G4double LN2_AbsorptionLength[NUMENTRIES_LN2] = { 100 * cm, 100 * cm,100 * cm ,100 * cm ,100 * cm ,100 * cm ,100 * cm ,100 * cm ,100 * cm ,100 * cm ,100 * cm };
     G4MaterialPropertiesTable* LN2_MPT = new G4MaterialPropertiesTable();
     LN2_MPT->AddProperty("RINDEX", LN2_PP, LN2_RefractiveIndex, NUMENTRIES_LN2);
     LN2_MPT->AddProperty("ABSLENGTH", LN2_PP, LN2_AbsorptionLength, NUMENTRIES_LN2);
