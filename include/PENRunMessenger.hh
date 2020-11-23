@@ -30,6 +30,7 @@ private:
     G4UIdirectory* fSrcDir;
 
     G4UIcmdWithABool* cmdRefresh;
+    G4UIcmdWithABool* cmdSetAccelerate;
 
 };
 

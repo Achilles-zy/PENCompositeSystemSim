@@ -17,7 +17,7 @@ PENPrimaryGeneratorAction::PENPrimaryGeneratorAction(PENDetectorConstruction* de
 	PrimaryE(0),
 	InitialE(1 * keV),
 	PrimaryName(""),
-	SrcType("Crystal")
+	SrcType("PENShell")
 {
     fPENGPS = new G4GeneralParticleSource();
 	fPrimaryMessenger = new PENPrimaryGeneratorMessenger(this);
@@ -55,7 +55,7 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 			G4double Radius = fDetCons->GetWireRadius();
 			G4double Length = fDetCons->GetWireLength();
 			G4ThreeVector WirePos = fDetCons->GetWirePos();
-			
+
 			//G4cout << "==========================Primary Info==========================" << G4endl;
 			//G4cout << "Wire Position: " << WirePos << G4endl;
 			//G4cout << "Wire Radius: " << Radius << G4endl;
@@ -99,6 +99,14 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
 			fPENGPS->GetCurrentSource()->GetEneDist()->SetEmax(InitialE);
 			fPENGPS->GetCurrentSource()->GetEneDist()->SetEmin(InitialE);
+		}
+		else if (SrcType == "InnerShellSurface") {
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Surface");
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(51 * mm);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(51 * mm / 2);
 		}
 		else {
 			G4cout << "Error: Src type not found! Using Geant4 default settings." << G4endl;

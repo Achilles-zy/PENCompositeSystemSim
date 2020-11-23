@@ -22,6 +22,7 @@ PENEventAction::PENEventAction(PENRunAction* runaction)
 	ifSiPM(false),
 	ifBulk(false),
     ifDetectable(false),
+    ifAccelerate(false),
 	run(runaction)
     //ResultFile("Distribution_Results_NTuple.root","RECREATE"),
     //Distribution_Results("Distribution_Results","Distribution_Results")
@@ -34,6 +35,8 @@ PENEventAction::PENEventAction(PENRunAction* runaction)
     SignalSiPMCount_1 = 0;
     SignalSiPMCount_2 = 0;
     SignalSiPMCount_3 = 0;
+    RowNb = sizeof(SiPMPhotonCount) / sizeof(SiPMPhotonCount[0]);
+    ColumnNb = sizeof(SiPMPhotonCount[0]) / sizeof(SiPMPhotonCount[0][0]);
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
  
@@ -60,6 +63,8 @@ void PENEventAction::BeginOfEventAction(const G4Event* evt)
   ifSiPM = false;
   ifBulk = false;
   ifDetectable = false;
+  ifAccelerate = false;
+  //G4cout << evt->GetEventID() << G4endl;
   // G4cout<<ID<<G4endl;
 }
 
@@ -72,14 +77,14 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
   analysisManager->FillH1(1, TotalSiPMPhotonCount);
   analysisManager->FillH1(2, TotalSiPMPhotonCount);
 
-  G4int rownb = sizeof(SiPMPhotonCount) / sizeof(SiPMPhotonCount[0]);
-  G4int columnnb = sizeof(SiPMPhotonCount[0]) / sizeof(SiPMPhotonCount[0][0]);
-  for (int i = 0; i < rownb; i++)
+  //G4int rownb = sizeof(SiPMPhotonCount) / sizeof(SiPMPhotonCount[0]);
+  //G4int columnnb = sizeof(SiPMPhotonCount[0]) / sizeof(SiPMPhotonCount[0][0]);
+  for (int i = 0; i < RowNb; i++)
   {
-      for (int j = 0; j < columnnb; j++)
+      for (int j = 0; j < ColumnNb; j++)
       {
           //G4cout << SiPMPhotonCount[i][j] << " ";
-          G4int NtupleColumnID = i * columnnb + j;
+          G4int NtupleColumnID = i * ColumnNb + j;
           analysisManager->FillNtupleIColumn(1, NtupleColumnID, TotalSiPMPhotonCount);
           if (SiPMPhotonCount[i][j] > PhotonCut_0) {
               SignalSiPMCount_0++;
@@ -150,7 +155,7 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
 
     G4int evtID = evt->GetEventID();
 
-    if (evtID % 5000 == 0) {
+    if (evtID % 2000 == 0) {
         G4cout << evtID << G4endl;
     }
 

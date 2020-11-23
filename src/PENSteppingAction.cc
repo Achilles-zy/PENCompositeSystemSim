@@ -4,6 +4,7 @@
 
 #include "PENDetectorConstruction.hh"
 #include "PENEventAction.hh"
+#include "PENRunAction.hh"
 
 #include "G4Track.hh"
 #include "G4SteppingManager.hh"
@@ -18,22 +19,50 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 PENSteppingAction::PENSteppingAction(
-				     PENEventAction* evt)
-:PENEvent(evt)
+				     PENEventAction* evt,PENRunAction* run)
+:PENEvent(evt),PENRun(run),EnableAcc(false)
 { }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 {
+	EnableAcc = PENRun->GetAccelerate();
+	//G4cout << "EnableAcc: " << PENRun->GetAccelerate() << G4endl;
 	auto volume = aStep->GetPostStepPoint()->GetTouchableHandle()->GetVolume();
 	auto touchable = aStep->GetPostStepPoint()->GetTouchableHandle();
 	auto particle_name = aStep->GetTrack()->GetParticleDefinition()->GetParticleName();
 
-	//G4cout << particle_name << G4endl;
 	auto edep = aStep->GetTotalEnergyDeposit();
-	if (PENEvent->GetSiPMPhotonCnt() > 3 && particle_name == "opticalphoton") {
-		//aStep->GetTrack()->SetTrackStatus(fStopAndKill);
+
+	//**********************For Acceleration**********************//
+	if (EnableAcc == true) {
+		if (PENEvent->GetAcceletateStatus() == false) {
+			SignalSiPMCount = 0;
+			G4int rownb = PENEvent->GetRowNb();
+			G4int columnnb = PENEvent->GetColumnNb();
+			for (int i = 0; i < rownb; i++)
+			{
+				for (int j = 0; j < columnnb; j++)
+				{
+					if (PENEvent->GetSiPMPhotonCount(i, j) > 3) {
+						SignalSiPMCount++;
+					}
+				}
+			}
+			if (SignalSiPMCount >= 2) {
+				PENEvent->SetAccelerate(true);
+			}
+		}
+
+		if (PENEvent->GetAcceletateStatus() == true && particle_name == "opticalphoton") {
+			aStep->GetTrack()->SetTrackStatus(fStopAndKill);
+		}
+		//if (PENEvent->GetTotalSiPMPhotonCnt() > 2 && particle_name == "opticalphoton") {
+		//	aStep->GetTrack()->SetTrackStatus(fStopAndKill);
+		//}
 	}
+
+	//***********************************************************//
 
 	const PENDetectorConstruction* detectorConstruction
 		= static_cast<const PENDetectorConstruction*>

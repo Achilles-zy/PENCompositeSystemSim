@@ -22,14 +22,21 @@ class G4UIcmdWithABool;
 
 PENRunMessenger::PENRunMessenger(PENRunAction* run)
     : G4UImessenger(),
-    cmdRefresh(0)
+    cmdRefresh(0),
+    cmdSetAccelerate(0)
 {
     fSrcDir = new G4UIdirectory("/PEN/run/");
     fSrcDir->SetGuidance("Run control");
 
     cmdRefresh = new G4UIcmdWithABool("/PEN/run/refresh", this);
-    cmdRefresh->SetGuidance("Choose the type of source");
+    cmdRefresh->SetGuidance("Refresh output file.");
     cmdRefresh->SetParameterName("IfRefresh", true);
+    cmdRefresh->SetDefaultValue("false");
+    cmdRefresh->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+    cmdRefresh = new G4UIcmdWithABool("/PEN/run/accelerate", this);
+    cmdRefresh->SetGuidance("Enable/disable acceleration.");
+    cmdRefresh->SetParameterName("IfAccelerate", true);
     cmdRefresh->SetDefaultValue("false");
     cmdRefresh->AvailableForStates(G4State_PreInit, G4State_Idle);
 
@@ -41,6 +48,7 @@ PENRunMessenger::PENRunMessenger(PENRunAction* run)
 PENRunMessenger::~PENRunMessenger()
 {
     delete cmdRefresh;
+    delete cmdSetAccelerate;
     delete fSrcDir;
     //delete fSourceEnergy;
     //delete fSourcePositionX;
@@ -55,6 +63,9 @@ void PENRunMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
 {
     if (command == cmdRefresh) {
         fAction->RefreshOutput(cmdRefresh->GetNewBoolValue(newValue));
+    }
+    if (command == cmdSetAccelerate) {
+        fAction->SetAccelerate(cmdRefresh->GetNewBoolValue(newValue));
     }
 }
 

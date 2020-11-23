@@ -29,9 +29,16 @@ class PENRunAction : public G4UserRunAction
 	void RefreshOutput(G4bool b) {
 		ifRefresh = b;
 	}
+	void SetAccelerate(G4bool b) {
+		ifAccelerate = b;
+	}
+	G4bool GetAccelerate() {
+		return ifAccelerate;
+	}
 	void CountSiPMEvent() { 
 		SiPMEventCount += 1;
 	};
+
 
 	inline 	void CountBulkEvent() {
 		BulkEventCount += 1;
@@ -90,10 +97,11 @@ private:
 	G4Accumulable<G4int> ROIVetoPossibleEvtCount;
 
 
-	PENRunMessenger* fPrimaryMessenger;
+	PENRunMessenger* fRunMessenger;
 	G4String filename;
 	G4String txtname;
 	G4bool ifRefresh;
+	G4bool ifAccelerate;
 	G4int runID;
 };
 

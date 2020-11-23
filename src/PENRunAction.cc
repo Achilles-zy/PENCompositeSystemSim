@@ -23,9 +23,10 @@ PENRunAction::PENRunAction(PENPrimaryGeneratorAction* gen, PENDetectorConstructi
 	ROIVetoEventCount(0),
 	ROIVetoPossibleEvtCount(0),
 	ifRefresh(false),
+	ifAccelerate(true),
 	runID(0)
 {
-  fPrimaryMessenger = new PENRunMessenger(this);
+  fRunMessenger = new PENRunMessenger(this);
   auto analysisManager = G4AnalysisManager::Instance();
   analysisManager->SetNtupleMerging(true);
   analysisManager->SetVerboseLevel(1);
@@ -91,6 +92,12 @@ void PENRunAction::BeginOfRunAction(const G4Run* aRun)
   G4String fileName;
   if (fDetCons->GetMode() == "Unit") {
 	  if (fPrimaryGenerator->GetSrcType() == "PENShell") {
+		  //fileName = "Unit_" + fDetCons->GetConfine() + "_" + std::to_string(RunID);
+		  fileName = "Unit_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType();
+		  filename = fileName;
+		  txtname = "Unit_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType();
+	  }
+	  else if (fPrimaryGenerator->GetSrcType() == "InnerShellSurface") {
 		  //fileName = "Unit_" + fDetCons->GetConfine() + "_" + std::to_string(RunID);
 		  fileName = "Unit_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType();
 		  filename = fileName;

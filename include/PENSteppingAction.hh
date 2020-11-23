@@ -9,20 +9,24 @@
 
 class PENDetectorConstruction;
 class PENEventAction;
+class PENRunAction;
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 class PENSteppingAction : public G4UserSteppingAction
 {
   public:
-    PENSteppingAction(PENEventAction*);
-   ~PENSteppingAction(){};
+      PENSteppingAction(PENEventAction*, PENRunAction*);
+      ~PENSteppingAction() {};
 
     void UserSteppingAction(const G4Step*);
 
   private:
 
     PENEventAction*      PENEvent;
+    PENRunAction* PENRun;
+    G4int SignalSiPMCount;
+    G4bool EnableAcc;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

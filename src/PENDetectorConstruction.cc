@@ -90,7 +90,7 @@ PENDetectorConstruction::PENDetectorConstruction():
 	fConfine = "PENShell";
 	fWireType = "A1";
 	fReflectorType = "ESR";
-	fMode = "SArUnit";
+	fMode = "Unit";
 	fWirePos = G4ThreeVector();
 	fWireRadius = 0.7 * mm;
 	fWireLength = 20 * cm;
@@ -832,7 +832,7 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
   physEnv = new G4PVPlacement(0, G4ThreeVector(), logicEnv, "Envelope", logicWorld, false, 0, checkOverlaps);
 
   G4LogicalVolume* logicTotalCrystal = ConstructBEGe();
-  auto physDet = new G4PVPlacement(0, G4ThreeVector(), logicTotalCrystal, "PhysDet", logicEnv, false, 0, checkOverlaps);
+  auto physDet = new G4PVPlacement(0, G4ThreeVector(0, 0, -1 * mm), logicTotalCrystal, "PhysDet", logicEnv, false, 0, checkOverlaps);
   
   //========================PEN shell and wire paremeters========================//
 
@@ -879,13 +879,14 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
   //PEN shell scintilator
   auto rotPENShell = new G4RotationMatrix();
   rotPENShell->rotateX(90 * degree);
+  G4ThreeVector PENShellPlacement =G4ThreeVector(0, 0, 34.1 * mm);
   G4LogicalVolume* logicPENShell = ConstructPENShell();
-  physPENShell = new G4PVPlacement(rotPENShell, G4ThreeVector(0, 0, 35.1 * mm), logicPENShell, "PENShell", logicEnv, false, 0, checkOverlaps);
+  physPENShell = new G4PVPlacement(rotPENShell, PENShellPlacement, logicPENShell, "PENShell", logicEnv, false, 0, checkOverlaps);
 
   //Reflector
   if (ifOuterReflector == true) {
 	  G4LogicalVolume* logicReflector = ConstructOuterReflector();
-	  physOuterReflector = new G4PVPlacement(rotPENShell, G4ThreeVector(0, 0, 35.1 * mm), logicReflector, "Reflector", logicEnv, false, 0, checkOverlaps);
+	  physOuterReflector = new G4PVPlacement(rotPENShell, PENShellPlacement, logicReflector, "Reflector", logicEnv, false, 0, checkOverlaps);
 
 	  //Reflector
 	  G4OpticalSurface* PEN_OuterReflector = new G4OpticalSurface("PEN_Reflector");
@@ -911,7 +912,7 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 
   if (ifInnerReflector == true) {
 	  G4LogicalVolume* logicReflector = ConstructInnerReflector();
-	  physInnerReflector = new G4PVPlacement(rotPENShell, G4ThreeVector(0, 0, 35.1 * mm), logicReflector, "Reflector", logicEnv, false, 0, checkOverlaps);
+	  physInnerReflector = new G4PVPlacement(rotPENShell, PENShellPlacement, logicReflector, "Reflector", logicEnv, false, 0, checkOverlaps);
 
 	  //Reflector
 	  G4OpticalSurface* PEN_InnerReflector = new G4OpticalSurface("PEN_Reflector");

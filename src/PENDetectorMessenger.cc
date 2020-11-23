@@ -35,10 +35,10 @@ PENDetectorMessenger::PENDetectorMessenger(PENDetectorConstruction* Det)
 	cmdSetOuterReflector(0),
 	cmdSetInnerReflector(0)
 {
-	fDetDir = new G4UIdirectory("/PEN/cons/set");
+	fDetDir = new G4UIdirectory("/PEN/cons/set/");
 	fDetDir->SetGuidance("Set construction parameters");
 
-	fPENDir = new G4UIdirectory("/PEN/sim/set");
+	fPENDir = new G4UIdirectory("/PEN/sim/set/");
 	fPENDir->SetGuidance("Set simulation parameters");
 
 	cmdSetConfine = new G4UIcmdWithAString("/PEN/sim/set/confine", this);
