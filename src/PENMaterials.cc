@@ -3,6 +3,7 @@
  * @brief Define PenMaterials
  * @author: (modified by) Luis Manzanillas
  * @date 2020 Pen - Max Planck Institut fur Physik
+ * Modified by Zhenyu Zhang, Tsinghua Univ.
  */
 
 
