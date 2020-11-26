@@ -7,6 +7,7 @@
 /run/numberOfThreads 24
 #
 
+/PEN/sim/set/confine PENShell
 /PEN/sim/set/mode Unit
 /PEN/src/type PENShell
 
@@ -16,6 +17,7 @@
 /PEN/mat/set/PENpropertiesID 1
 /PEN/sim/set/runinfo SelfVeto-1
 /PEN/run/refresh true
+/PEN/run/accelerate true
 
 #Ac228
 /gps/particle ion
@@ -39,7 +41,6 @@
 /gps/particle ion
 /gps/ion 81 208 0 0
 /gps/energy 0 keV
-/LEGEND/readout/angle 10
 /run/beamOn 1000000
 
 ###############################
@@ -72,5 +73,4 @@
 /gps/particle ion
 /gps/ion 81 208 0 0
 /gps/energy 0 keV
-/LEGEND/readout/angle 10
 /run/beamOn 1000000

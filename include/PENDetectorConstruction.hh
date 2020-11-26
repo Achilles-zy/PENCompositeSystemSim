@@ -187,6 +187,8 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4Material* matGAGG;
 		G4Material* matPTFE;
 		G4Material* matCu;
+        G4Material* matNylon;
+        G4Material* matTPB;
 
         G4Material* fDetMat;
 

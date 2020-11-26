@@ -4,7 +4,7 @@
 /run/verbose 0
 #
 # Change the default number of threads (in multi-threaded mode)
-/run/numberOfThreads 24
+/run/numberOfThreads 48
 #
 
 /PEN/sim/set/confine PENShell
@@ -24,7 +24,7 @@
 /gps/particle ion
 /gps/ion 19 42 0 0
 /gps/energy 0 keV
-/run/beamOn 10
+/run/beamOn 1000000
 
 ###############################
 #PENPropertiesID=2
@@ -38,4 +38,4 @@
 /gps/particle ion
 /gps/ion 19 42 0 0
 /gps/energy 0 keV
-/run/beamOn 100
+/run/beamOn 1000000

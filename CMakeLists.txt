@@ -6,13 +6,13 @@ cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 project(PENCompositeSystemSim)
 
 # Load some basic macros which are needed later on
-#include(FindROOT.cmake)
-#set(INCLUDE_DIRECTORIES
-#${ROOT_INCLUDE_DIR})
-#include_directories( ${INCLUDE_DIRECTORIES})
-#set(LINK_DIRECTORIES
-#${ROOT_LIBRARY_DIR})
-#link_directories( ${LINK_DIRECTORIES})
+include(FindROOT.cmake)
+set(INCLUDE_DIRECTORIES
+${ROOT_INCLUDE_DIR})
+include_directories( ${INCLUDE_DIRECTORIES})
+set(LINK_DIRECTORIES
+${ROOT_LIBRARY_DIR})
+link_directories( ${LINK_DIRECTORIES})
 
 #----------------------------------------------------------------------------
 # Find Geant4 package, activating all available UI and Vis drivers by default
@@ -46,7 +46,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #
 add_executable(PENCompositeSystemSim PENVetoSim.cc ${sources} ${headers})
 #target_link_libraries(PENVetoSim ${Geant4_LIBRARIES})
-#target_link_libraries(PENVetoSim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
+target_link_libraries(PENCompositeSystemSim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
 target_link_libraries(PENCompositeSystemSim ${Geant4_LIBRARIES})
 
 #----------------------------------------------------------------------------
@@ -69,6 +69,7 @@ set(PENCompositeSystemSim_SCRIPTS
   #scan.c
   vis.mac
   batch-SelfVeto.mac
+  batch-InnerShellSurface.mac
   src1.mac
   )
 

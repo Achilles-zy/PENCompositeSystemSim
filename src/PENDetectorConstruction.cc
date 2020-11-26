@@ -186,6 +186,8 @@ void PENDetectorConstruction::DefineMat()
 	matLAr = G4Material::GetMaterial("G4_lAr");
 	matGAGG = G4Material::GetMaterial("GAGG");
 	matPTFE = G4Material::GetMaterial("PTFE");
+	matNylon = G4Material::GetMaterial("Nylon");
+	matTPB = G4Material::GetMaterial("TPB");
 
 	G4cout << " materials ok " << G4endl;
 
