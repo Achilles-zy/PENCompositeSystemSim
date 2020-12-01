@@ -137,6 +137,7 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4VPhysicalVolume* physPENShell;
         G4VPhysicalVolume* physOuterReflector;
         G4VPhysicalVolume* physInnerReflector;
+        G4VPhysicalVolume* physSArCrystal;
         //G4LogicalVolume* logicPENShell;
         G4Tubs* solidSideSiPM;
 

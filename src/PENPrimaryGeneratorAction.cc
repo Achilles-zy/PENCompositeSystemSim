@@ -127,7 +127,7 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
-			fPENGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(G4ThreeVector(0, 0, 75 * cm));
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(G4ThreeVector(0, 0, Length / 2));
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius);
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
 
@@ -135,7 +135,7 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		}
 
 		//Needs to be fixed
-		/*
+		
 		else if (SrcType == "Container") {
 			G4double Radius = fDetCons->GetSArBrickRadius();
 			G4double Length = fDetCons->GetSArBrickHeight();
@@ -153,9 +153,9 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius);
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
 
-			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("SArContainer");
+			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("SArBrick");
 		}
-		*/
+		
 		else {
 			G4cout << "Error: Src type not found! Using Geant4 default settings." << G4endl;
 		}

@@ -27,14 +27,16 @@ PENEventAction::PENEventAction(PENRunAction* runaction)
     //ResultFile("Distribution_Results_NTuple.root","RECREATE"),
     //Distribution_Results("Distribution_Results","Distribution_Results")
 {
-    PhotonCut_0 = 1;
+    PhotonCut_0 = 2;
     PhotonCut_1 = 3;
-    PhotonCut_2 = 5;
-    PhotonCut_3 = 10;
+    PhotonCut_2 = 4;
+    PhotonCut_3 = 5;
+    PhotonCut_4 = 10;
     SignalSiPMCount_0 = 0;
     SignalSiPMCount_1 = 0;
     SignalSiPMCount_2 = 0;
     SignalSiPMCount_3 = 0;
+    SignalSiPMCount_4 = 0;
     RowNb = sizeof(SiPMPhotonCount) / sizeof(SiPMPhotonCount[0]);
     ColumnNb = sizeof(SiPMPhotonCount[0]) / sizeof(SiPMPhotonCount[0][0]);
 }
@@ -58,6 +60,7 @@ void PENEventAction::BeginOfEventAction(const G4Event* evt)
   SignalSiPMCount_1 = 0;
   SignalSiPMCount_2 = 0;
   SignalSiPMCount_3 = 0;
+  SignalSiPMCount_4 = 0;
   MinSignalSiPMCount = 2;
   EscapedPhotonCount = 0;
   ifSiPM = false;
@@ -76,6 +79,7 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
   analysisManager->FillH1(0, edepBulk);
   analysisManager->FillH1(1, TotalSiPMPhotonCount);
   analysisManager->FillH1(2, TotalSiPMPhotonCount);
+  analysisManager->FillNtupleDColumn(2, 0, edepBulk);
 
   //G4int rownb = sizeof(SiPMPhotonCount) / sizeof(SiPMPhotonCount[0]);
   //G4int columnnb = sizeof(SiPMPhotonCount[0]) / sizeof(SiPMPhotonCount[0][0]);
@@ -86,17 +90,20 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
           //G4cout << SiPMPhotonCount[i][j] << " ";
           G4int NtupleColumnID = i * ColumnNb + j;
           analysisManager->FillNtupleIColumn(1, NtupleColumnID, TotalSiPMPhotonCount);
-          if (SiPMPhotonCount[i][j] > PhotonCut_0) {
+          if (SiPMPhotonCount[i][j] >= PhotonCut_0) {
               SignalSiPMCount_0++;
           }
-          if (SiPMPhotonCount[i][j] > PhotonCut_1) {
+          if (SiPMPhotonCount[i][j] >= PhotonCut_1) {
               SignalSiPMCount_1++;
           }
-          if (SiPMPhotonCount[i][j] > PhotonCut_2) {
+          if (SiPMPhotonCount[i][j] >= PhotonCut_2) {
               SignalSiPMCount_2++;
           }
-          if (SiPMPhotonCount[i][j] > PhotonCut_3) {
+          if (SiPMPhotonCount[i][j] >= PhotonCut_3) {
               SignalSiPMCount_3++;
+          }
+          if (SiPMPhotonCount[i][j] >= PhotonCut_4) {
+              SignalSiPMCount_4++;
           }
       }
       //G4cout<<G4endl;
@@ -122,6 +129,11 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
     if (edepBulk > 0 && SignalSiPMCount_3 >= MinSignalSiPMCount) {
         //G4cout << "SignalSiPMCount3Ture" << G4endl;
         run->CountVetoEvent_3();
+    }
+
+    if (edepBulk > 0 && SignalSiPMCount_3 >= MinSignalSiPMCount) {
+        //G4cout << "SignalSiPMCount3Ture" << G4endl;
+        run->CountVetoEvent_4();
     }
 
 	if (edepBulk > 0) {

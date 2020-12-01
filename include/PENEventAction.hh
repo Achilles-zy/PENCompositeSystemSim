@@ -45,12 +45,14 @@ class PENEventAction : public G4UserEventAction
     G4int PhotonCut_1;
     G4int PhotonCut_2;
     G4int PhotonCut_3;
+    G4int PhotonCut_4;
     G4int RowNb;
     G4int ColumnNb;
     G4int SignalSiPMCount_0;
     G4int SignalSiPMCount_1;
     G4int SignalSiPMCount_2;
     G4int SignalSiPMCount_3;
+    G4int SignalSiPMCount_4;
     G4int MinSignalSiPMCount;
 
     G4int Total;

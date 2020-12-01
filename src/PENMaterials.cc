@@ -72,6 +72,7 @@ PENMaterials::PENMaterials()
 {
     lightYieldAntracene=20000/MeV; //Anthracene
     pathString = "../data";
+    //fTPB = nullptr;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -1352,8 +1353,10 @@ void PENMaterials::Construct()
     G4Material* materialTitanium = new G4Material("Titanium", 4.54*g/cm3, 2);
     materialTitanium->AddElement(Ti,0.99);
     materialTitanium->AddElement(O,0.01);  
-
+    InitializeTPBSpectra();
     Register_TPB_Properties();
+
+    InitializeFiberSpectra();
     Register_Fiber_Properties();
     Register_Fiber_Cladding_Properties();
     Register_Copper_Properties();
@@ -1548,13 +1551,99 @@ void PENMaterials::RegisterArgonOpticalProperties()
 
     G4double fano = 0.11;// Doke et al, NIM 134 (1976)353
     myMPT1->AddConstProperty("RESOLUTIONSCALE", fano);
-    G4NistManager* nistManager = G4NistManager::Instance();
-    G4Material* matLAr = nistManager->FindOrBuildMaterial("G4_lAr");
-    matLAr = G4Material::GetMaterial("Argon-Liq");
+    //G4NistManager* nistManager = G4NistManager::Instance();
+    //G4Material* matLAr = nistManager->FindOrBuildMaterial("G4_lAr");
+    G4Material* matLAr = G4Material::GetMaterial("G4_lAr");
+
+    /////////////////////////////////////
+
+    G4double wavelength;
+    char filler;
+    G4double varAbsorLength;
+    G4double emission;
+    G4double rindex;
+
+    G4double wlPhotonEnergy[102] = { 0 };
+    G4double ABSORPTION_PEN[102] = { 0 };
+    G4double RINDEX_PEN[102] = { 0 };
+
+    G4int absEntries = 0;
+
+    ifstream ReadAbs;
+
+    G4String absFile = "../input_files/PEN_ABS.csv";
+    ReadAbs.open(absFile);
+    if (ReadAbs.is_open())
+    {
+        while (!ReadAbs.eof())
+        {
+            ReadAbs >> wavelength >> filler >> varAbsorLength >> filler >> emission >> filler >> rindex;
+            if (ReadAbs.eof()) {
+                break;
+            }
+            wlPhotonEnergy[absEntries] = (1240. / wavelength) * eV;
+            ABSORPTION_PEN[absEntries] = (30 * varAbsorLength) * mm;
+            RINDEX_PEN[absEntries] = rindex;
+            absEntries++;
+        }
+    }
+
+    else G4cout << "Error opening file: " << absFile << G4endl;
+    ReadAbs.close();
+    absEntries--;
+
+    const G4int nEntries1 = sizeof(wlPhotonEnergy) / sizeof(G4double);
+    assert(sizeof(RINDEX_PEN) == sizeof(wlPhotonEnergy));
+    assert(sizeof(ABSORPTION_PEN) == sizeof(wlPhotonEnergy));
+    //assert(sizeof(EMISSION_PEN) == sizeof(wlPhotonEnergy));
+
+    G4MaterialPropertiesTable* MPT_PEN = new G4MaterialPropertiesTable();
+
+    // Read primary emission spectrum from PEN
+    // Measurements from MPP Munich
+    G4double pWavelength;
+    G4String  Scint_file = "../properties/PEN_EM_SPECTRUM.dat";
+    std::ifstream ReadScint2(Scint_file), ReadScintPEN;
+    //count number of entries
+    ReadScint2.unsetf(std::ios_base::skipws);
+    //unsigned line_count = std::count(
+    int line_count = std::count(
+        std::istream_iterator<char>(ReadScint2),
+        std::istream_iterator<char>(),
+        '\n');
+    std::cout << "Lines: " << line_count << "\n";
+    ReadScint2.close();
+    G4double PEN_EMISSION[500];
+    G4double PEN_WL_ENERGY[500];
+    G4int nEntriesPEN = 0;
+    ReadScintPEN.open(Scint_file);
+    if (ReadScintPEN.is_open()) {
+        while (!ReadScintPEN.eof()) {
+
+            ReadScintPEN >> pWavelength >> PEN_EMISSION[nEntriesPEN];
+            if (ReadScintPEN.eof()) {
+                break;
+            }
+            PEN_WL_ENERGY[nEntriesPEN] = (1240. / pWavelength) * eV;//convert wavelength to eV
+        //G4cout<<nEntriesPEN<<" wl "<<PEN_WL_ENERGY[nEntriesPEN]<<" "<<PEN_EMISSION[nEntriesPEN]<<G4endl;
+            nEntriesPEN++;
+            if (nEntriesPEN > (line_count - 1)) { G4cout << " entries completed " << G4endl; break; }
+        }
+    }
+    else
+        G4cout << "Error opening file: " << Scint_file << G4endl;
+    ReadScintPEN.close();
+    G4cout << " nEntriesPEN " << nEntriesPEN << G4endl;
+    //myMPT1->AddProperty("RINDEX", wlPhotonEnergy, RINDEX_PEN, nEntries1)->SetSpline(true);
+    //myMPT1->AddProperty("FASTCOMPONENT", PEN_WL_ENERGY, PEN_EMISSION, line_count)->SetSpline(true);
+    //myMPT1->AddProperty("SLOWCOMPONENT", PEN_WL_ENERGY, PEN_EMISSION, line_count)->SetSpline(true);
+
+    //matLAr->SetMaterialPropertiesTable(MPT_PEN);
+
+    ////////////////////////////////////
+
     matLAr->SetMaterialPropertiesTable(myMPT1);
-
     matLAr->GetIonisation()->SetBirksConstant(5.1748e-4 * cm / MeV);
-
 }
 
 G4double PENMaterials::LArRefIndex(const G4double lambda)
@@ -1619,6 +1708,9 @@ void PENMaterials::Register_TPB_Properties()
     G4NistManager* nist = G4NistManager::Instance();
     G4Element* elementH = nist->FindOrBuildElement("H");
     G4Element* elementC = nist->FindOrBuildElement("C");
+    //G4Material* TPB = new G4Material("TPB", 1 * g / cm3, 2, kStateSolid);
+    //TPB->AddElement(elementH, 22);
+    //TPB->AddElement(elementC, 28);
     fTPB = new G4Material("TPB", 1 * g / cm3, 2, kStateSolid);
     fTPB->AddElement(elementH, 22);
     fTPB->AddElement(elementC, 28);
@@ -1668,14 +1760,18 @@ void PENMaterials::Register_TPB_Properties()
     //apperently TPB scintillates?!?!?
     G4double LightYield = 10000.; //7000 - 8000 for scintillating fibers, for WLS fiber is less
     tpbTable->AddConstProperty("SCINTILLATIONYIELD", LightYield / MeV); // limit scint. phot. JJ
-    if (!fTPB) G4cout << " TPB is bad material and you should feel bad for using it!" << G4endl;
+    //if (!fTPB) G4cout << " TPB is bad material and you should feel bad for using it!" << G4endl;
+
     fTPB->SetMaterialPropertiesTable(tpbTable);
+    //TPB->SetMaterialPropertiesTable(tpbTable);
+
     //MGLog(routine) << "Constructed TPB Properties" << endlog;
 }
 //copied from GEGSLArGeOptical.cc
 void PENMaterials::InitializeTPBSpectra()
 {
     fSuccessfulInitialization = false;
+    //G4String pathFile = "../data/TPBOnVM2000Emission.dat";
     G4String pathFile = pathString + "/TPBOnVM2000Emission.dat";
     fTPBspec = new TGraph(pathFile.data());
     if (fTPBspec->GetN() > 0) {
@@ -1808,7 +1904,9 @@ void PENMaterials::InitializeFiberSpectra()
 {
     fSuccessfulInitialization = false;
     G4String pathFile = pathString + "/FibersAbsorption.dat";
-    fFibersAbsorptionSpec = new TGraph(pathFile.data(), "%lg,%lg");
+    fFibersAbsorptionSpec = new TGraph(pathFile.data());
+    //fFibersAbsorptionSpec = new TGraph(pathFile.data(), "%lg,%lg");
+    //?
     if (fFibersAbsorptionSpec->GetN() > 0) {
         //MGLog(routine) << "Fibers absorption spectrum ( " << fFibersAbsorptionSpec->GetN()
         //    << " points) successfully loaded from file." << endlog;
@@ -1827,7 +1925,8 @@ void PENMaterials::InitializeFiberSpectra()
     }
 
     pathFile = pathString + "/FibersEmission.dat";
-    fFibersEmissionSpec = new TGraph(pathFile.data(), "%lg,%lg");
+    //fFibersEmissionSpec = new TGraph(pathFile.data(), "%lg,%lg");
+    fFibersEmissionSpec = new TGraph(pathFile.data());
     if (fFibersEmissionSpec->GetN() > 0) {
         //MGLog(routine) << "Fibers emission spectrum ( " << fFibersEmissionSpec->GetN()
         //    << " points) successfully loaded from file." << endlog;

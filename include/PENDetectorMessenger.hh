@@ -31,6 +31,7 @@ private:
 
     G4UIdirectory* fPENDir;
     G4UIdirectory* fDetDir;
+    G4UIdirectory* fMatDir;
 
     G4UIcmdWithAString* cmdSetWireType;
     G4UIcmdWithAString* cmdSetReflectorType;

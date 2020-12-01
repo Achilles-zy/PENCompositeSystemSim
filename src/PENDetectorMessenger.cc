@@ -25,6 +25,7 @@ PENDetectorMessenger::PENDetectorMessenger(PENDetectorConstruction* Det)
 	fDetCons(Det),
 	fPENDir(0),
 	fDetDir(0),
+	fMatDir(0),
 	cmdSetWireType(0),
 	cmdSetReflectorType(0),
 	cmdSetConfine(0),
@@ -40,6 +41,9 @@ PENDetectorMessenger::PENDetectorMessenger(PENDetectorConstruction* Det)
 
 	fPENDir = new G4UIdirectory("/PEN/sim/set/");
 	fPENDir->SetGuidance("Set simulation parameters");
+
+	fMatDir = new G4UIdirectory("/PEN/mat/set/");
+	fMatDir->SetGuidance("Set material parameters");
 
 	cmdSetConfine = new G4UIcmdWithAString("/PEN/sim/set/confine", this);
 	cmdSetConfine->SetGuidance("Set confine name in file name.");
@@ -97,6 +101,7 @@ PENDetectorMessenger::~PENDetectorMessenger()
 {
 	delete fDetDir;
 	delete fPENDir;
+	delete fMatDir;
 	delete cmdSetWireType;
 	delete cmdSetReflectorType;
 	delete cmdSetConfine;
