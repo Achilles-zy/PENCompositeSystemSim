@@ -186,7 +186,7 @@ void PENRunAction::CDEXOutput(const G4Run* aRun) {
 		G4cout << "VetoEventCount_1 =" << VetoEventCount_1.GetValue() << G4endl;
 		G4cout << "VetoEventCount_2 =" << VetoEventCount_2.GetValue() << G4endl;
 		G4cout << "VetoEventCount_3 =" << VetoEventCount_3.GetValue() << G4endl;
-		G4cout << "VetoEventCount_3 =" << VetoEventCount_4.GetValue() << G4endl;
+		G4cout << "VetoEventCount_4 =" << VetoEventCount_4.GetValue() << G4endl;
 		G4cout << "SiPMEventCount =" << SiPMEventCount.GetValue() << G4endl;
 		G4cout << "BulkEventCount =" << BulkEventCount.GetValue() << G4endl;
 		G4cout << "DetectableEventCount =" << DetectableEventCount.GetValue() << G4endl;

@@ -434,18 +434,7 @@ void PENMaterials::Construct()
     LN2_MPT->AddProperty("ABSLENGTH", LN2_PP, LN2_AbsorptionLength, NUMENTRIES_LN2);
     matLN2->SetMaterialPropertiesTable(LN2_MPT);
 
-    // ------------------------------------------------------------------------
-    // LAr
-    // ------------------------------------------------------------------------
 
-    G4Material* matLAr = nistManager->FindOrBuildMaterial("G4_lAr");
-    RegisterArgonOpticalProperties();
-
-	// ------------------------------------------------------------------------
-	// Cu
-	// ------------------------------------------------------------------------
-
-	G4Material* matCu = nistManager->FindOrBuildMaterial("G4_Cu");
 
 
     // ------------------------------------------------------------------------
@@ -1327,7 +1316,8 @@ void PENMaterials::Construct()
                 counter_glass++;
                 if(counter_glass > (glassPMTEntries - 1)){break;}
         }
-    }else{G4cout << "Error opening file: " << glassPMT_file << G4endl;}
+    }else
+    {G4cout << "Error opening file: " << glassPMT_file << G4endl;}
     Read_glassPMT.close();
     MPT_GlassPMT->AddProperty("RINDEX",glassPMTEnergy,glassPMTRindex,glassPMTEntries);
     MPT_GlassPMT->AddProperty("ABSLENGTH",glassPMTEnergy,glassPMTAbs,glassPMTEntries);
@@ -1349,6 +1339,20 @@ void PENMaterials::Construct()
     materialBialkali->AddElement(Cs, 0.32);
     materialBialkali->AddElement(K, 0.36);
    
+    // ------------------------------------------------------------------------
+    // LAr
+    // ------------------------------------------------------------------------
+
+    G4Material* matLAr = nistManager->FindOrBuildMaterial("G4_lAr");
+    RegisterArgonOpticalProperties();
+
+    // ------------------------------------------------------------------------
+    // Cu
+    // ------------------------------------------------------------------------
+
+    G4Material* matCu = nistManager->FindOrBuildMaterial("G4_Cu");
+    Register_Copper_Properties();
+
     //Titanium foil for Bi source
     G4Material* materialTitanium = new G4Material("Titanium", 4.54*g/cm3, 2);
     materialTitanium->AddElement(Ti,0.99);
@@ -1359,7 +1363,7 @@ void PENMaterials::Construct()
     InitializeFiberSpectra();
     Register_Fiber_Properties();
     Register_Fiber_Cladding_Properties();
-    Register_Copper_Properties();
+
     Register_Germanium_Properties();
     Register_Silicon_Properties();
     Register_StainlessSteel();
@@ -1391,10 +1395,14 @@ void PENMaterials::Construct()
 /// Optical properties of LAr in several places
 void PENMaterials::RegisterArgonOpticalProperties()
 {
-    static const G4int NUMENTRIES = 69;
+    //static const G4int NUMENTRIES = 69;
+    //const G4int num = 69;
+    //static const G4double temp = 88.5 * kelvin;
+    //static const G4double LambdaE = twopi * 1.973269602e-16 * m * GeV;
+    const G4int NUMENTRIES = 69;
     const G4int num = 69;
-    static const G4double temp = 88.5 * kelvin;
-    static const G4double LambdaE = twopi * 1.973269602e-16 * m * GeV;
+    const G4double temp = 88.5 * kelvin;
+    //const G4double LambdaE = twopi * 1.973269602e-16 * m * GeV;
 
     /**
      * Nominal values for pure argon
@@ -1437,10 +1445,10 @@ void PENMaterials::RegisterArgonOpticalProperties()
     G4double de = ((PPCKOVHighE - PPCKOVLowE) / ((G4double)(NUMENTRIES - 1)));
 
     // liquid argon (LAr)
-    G4double LAr_PPCK[(NUMENTRIES)];
-    G4double LAr_RIND[(NUMENTRIES)];
-    G4double LAr_RAYL[(NUMENTRIES)];
-    G4double LAr_ABSL[(NUMENTRIES)];
+    G4double LAr_PPCK[(NUMENTRIES)] = { 0 };
+    G4double LAr_RIND[(NUMENTRIES)] = { 0 };
+    G4double LAr_RAYL[(NUMENTRIES)] = { 0 };
+    G4double LAr_ABSL[(NUMENTRIES)] = { 0 };
 
     G4double LAr_ABSL_xuv = 60 * cm;
     //G4double LAr_ABSL_xuv = 110*cm;
@@ -1454,6 +1462,8 @@ void PENMaterials::RegisterArgonOpticalProperties()
         e = PPCKOVLowE + ((G4double)ji) * de;
         LAr_PPCK[ji] = e;
         LAr_RIND[ji] = LArRefIndex((LambdaE / e));
+        //G4double b= LArRayLength((LambdaE / e), temp);
+        //G4double T = temp;
         LAr_RAYL[ji] = LArRayLength((LambdaE / e), temp);
         //MGLog(debugging) << (LambdaE / LAr_PPCK[ji]) / nm << ", " << LAr_RAYL[ji] << endlog;
         /* Uncomment for debugging purposes
@@ -1474,13 +1484,15 @@ void PENMaterials::RegisterArgonOpticalProperties()
     G4double PPSCHighE = LambdaE / (115 * nanometer);
     G4double PPSCLowE = LambdaE / (136 * nanometer);
     G4double dee = ((PPSCHighE - PPSCLowE) / ((G4double)(num - 1)));
-    G4double LAr_SCIN[num];
-    G4double LAr_SCPP[num];
+    G4double LAr_SCIN[num] = { 0 };
+    G4double LAr_SCPP[num] = { 0 };
     for (ji = 0; ji < num; ji++)
     {
         ee = PPSCLowE + ((G4double)ji) * dee;
         LAr_SCPP[ji] = ee;
-        LAr_SCIN[ji] = ArScintillationSpectrum((LambdaE / ee) / nanometer);
+        //LAr_SCIN[ji] = ArScintillationSpectrum((LambdaE / ee) / nanometer);
+        LAr_SCIN[ji] = exp(-0.5 * (((LambdaE / ee) / nanometer - 128.0) / (2.929)) * (((LambdaE / ee) / nanometer - 128.0) / (2.929)));
+        
         /** Keep for debugging purposes
         MGLog(debugging) << " WL: " << (LambdaE/LAr_SCPP[ji])/nanometer<< " nm Scint: " << LAr_SCPP[ji]/eV << " eV :: " << LAr_SCIN[ji] << endlog;
 
@@ -1492,7 +1504,7 @@ void PENMaterials::RegisterArgonOpticalProperties()
     G4MaterialPropertiesTable* myMPT1 = new G4MaterialPropertiesTable();
 
     myMPT1->AddProperty("RINDEX", LAr_PPCK, LAr_RIND, NUMENTRIES);
-    myMPT1->AddProperty("RAYLEIGH", LAr_PPCK, LAr_RAYL, NUMENTRIES);
+    //myMPT1->AddProperty("RAYLEIGH", LAr_PPCK, LAr_RAYL, NUMENTRIES);
     myMPT1->AddProperty("ABSLENGTH", LAr_PPCK, LAr_ABSL, NUMENTRIES);
 
     // Fast and slow components of the scintillation
@@ -1555,93 +1567,6 @@ void PENMaterials::RegisterArgonOpticalProperties()
     //G4Material* matLAr = nistManager->FindOrBuildMaterial("G4_lAr");
     G4Material* matLAr = G4Material::GetMaterial("G4_lAr");
 
-    /////////////////////////////////////
-
-    G4double wavelength;
-    char filler;
-    G4double varAbsorLength;
-    G4double emission;
-    G4double rindex;
-
-    G4double wlPhotonEnergy[102] = { 0 };
-    G4double ABSORPTION_PEN[102] = { 0 };
-    G4double RINDEX_PEN[102] = { 0 };
-
-    G4int absEntries = 0;
-
-    ifstream ReadAbs;
-
-    G4String absFile = "../input_files/PEN_ABS.csv";
-    ReadAbs.open(absFile);
-    if (ReadAbs.is_open())
-    {
-        while (!ReadAbs.eof())
-        {
-            ReadAbs >> wavelength >> filler >> varAbsorLength >> filler >> emission >> filler >> rindex;
-            if (ReadAbs.eof()) {
-                break;
-            }
-            wlPhotonEnergy[absEntries] = (1240. / wavelength) * eV;
-            ABSORPTION_PEN[absEntries] = (30 * varAbsorLength) * mm;
-            RINDEX_PEN[absEntries] = rindex;
-            absEntries++;
-        }
-    }
-
-    else G4cout << "Error opening file: " << absFile << G4endl;
-    ReadAbs.close();
-    absEntries--;
-
-    const G4int nEntries1 = sizeof(wlPhotonEnergy) / sizeof(G4double);
-    assert(sizeof(RINDEX_PEN) == sizeof(wlPhotonEnergy));
-    assert(sizeof(ABSORPTION_PEN) == sizeof(wlPhotonEnergy));
-    //assert(sizeof(EMISSION_PEN) == sizeof(wlPhotonEnergy));
-
-    G4MaterialPropertiesTable* MPT_PEN = new G4MaterialPropertiesTable();
-
-    // Read primary emission spectrum from PEN
-    // Measurements from MPP Munich
-    G4double pWavelength;
-    G4String  Scint_file = "../properties/PEN_EM_SPECTRUM.dat";
-    std::ifstream ReadScint2(Scint_file), ReadScintPEN;
-    //count number of entries
-    ReadScint2.unsetf(std::ios_base::skipws);
-    //unsigned line_count = std::count(
-    int line_count = std::count(
-        std::istream_iterator<char>(ReadScint2),
-        std::istream_iterator<char>(),
-        '\n');
-    std::cout << "Lines: " << line_count << "\n";
-    ReadScint2.close();
-    G4double PEN_EMISSION[500];
-    G4double PEN_WL_ENERGY[500];
-    G4int nEntriesPEN = 0;
-    ReadScintPEN.open(Scint_file);
-    if (ReadScintPEN.is_open()) {
-        while (!ReadScintPEN.eof()) {
-
-            ReadScintPEN >> pWavelength >> PEN_EMISSION[nEntriesPEN];
-            if (ReadScintPEN.eof()) {
-                break;
-            }
-            PEN_WL_ENERGY[nEntriesPEN] = (1240. / pWavelength) * eV;//convert wavelength to eV
-        //G4cout<<nEntriesPEN<<" wl "<<PEN_WL_ENERGY[nEntriesPEN]<<" "<<PEN_EMISSION[nEntriesPEN]<<G4endl;
-            nEntriesPEN++;
-            if (nEntriesPEN > (line_count - 1)) { G4cout << " entries completed " << G4endl; break; }
-        }
-    }
-    else
-        G4cout << "Error opening file: " << Scint_file << G4endl;
-    ReadScintPEN.close();
-    G4cout << " nEntriesPEN " << nEntriesPEN << G4endl;
-    //myMPT1->AddProperty("RINDEX", wlPhotonEnergy, RINDEX_PEN, nEntries1)->SetSpline(true);
-    //myMPT1->AddProperty("FASTCOMPONENT", PEN_WL_ENERGY, PEN_EMISSION, line_count)->SetSpline(true);
-    //myMPT1->AddProperty("SLOWCOMPONENT", PEN_WL_ENERGY, PEN_EMISSION, line_count)->SetSpline(true);
-
-    //matLAr->SetMaterialPropertiesTable(MPT_PEN);
-
-    ////////////////////////////////////
-
     matLAr->SetMaterialPropertiesTable(myMPT1);
     matLAr->GetIonisation()->SetBirksConstant(5.1748e-4 * cm / MeV);
 }
@@ -1651,11 +1576,34 @@ G4double PENMaterials::LArRefIndex(const G4double lambda)
     return (sqrt(LArEpsilon(lambda))); // square root of dielectric constant
 }
 
+G4double PENMaterials::LArRefIndex1(G4double lambda)
+{
+    return (sqrt(LArEpsilon1(lambda))); // square root of dielectric constant
+}
+
 // Calculates the dielectric constant of LAr from the Bideau-Sellmeier formula.
 // See : A. Bideau-Mehu et al., "Measurement of refractive indices of Ne, Ar,
 // Kr and Xe ...", J. Quant. Spectrosc. Radiat. Transfer, Vol. 25 (1981), 395
 
 G4double PENMaterials::LArEpsilon(const G4double lambda)
+{
+    G4double epsilon;
+    if (lambda < 110 * nanometer) return 1.0e4; // lambda MUST be > 110.0 nm
+    epsilon = lambda / micrometer; // switch to micrometers
+    epsilon = 1.0 / (epsilon * epsilon); // 1 / (lambda)^2
+    epsilon = 1.2055e-2 * (0.2075 / (91.012 - epsilon) +
+        0.0415 / (87.892 - epsilon) +
+        4.3330 / (214.02 - epsilon));
+    epsilon *= (8. / 12.); // Bideau-Sellmeier -> Clausius-Mossotti
+    G4double LArRho = 1.396 * g / cm3;
+    G4double GArRho = 1.66e-03 * g / cm3;
+    epsilon *= (LArRho / GArRho); // density correction (Ar gas -> LAr liquid)
+    if (epsilon < 0.0 || epsilon > 0.999999) return 4.0e6;
+    epsilon = (1.0 + 2.0 * epsilon) / (1.0 - epsilon); // solve Clausius-Mossotti
+    return epsilon;
+}
+
+G4double PENMaterials::LArEpsilon1(G4double lambda)
 {
     G4double epsilon;
     if (lambda < 110 * nanometer) return 1.0e4; // lambda MUST be > 110.0 nm
@@ -1681,8 +1629,10 @@ G4double PENMaterials::LArEpsilon(const G4double lambda)
 G4double PENMaterials::LArRayLength(const G4double lambda, const G4double temp)
 {
     G4double dyne = 1.0e-5 * newton;
-    static const G4double LArKT = 2.18e-10 * cm2 / dyne; // LAr isothermal compressibility
-    static const G4double k = 1.380658e-23 * joule / kelvin; // the Boltzmann constant
+    //static const G4double LArKT = 2.18e-10 * cm2 / dyne; // LAr isothermal compressibility
+    //static const G4double k = 1.380658e-23 * joule / kelvin; // the Boltzmann constant
+    G4double LArKT = 2.18e-10 * cm2 / dyne; // LAr isothermal compressibility
+    G4double k = 1.380658e-23 * joule / kelvin; // the Boltzmann constant
     G4double h;
     h = LArEpsilon(lambda);
     if (h < 1.00000001) h = 1.00000001; // just a precaution
@@ -1696,7 +1646,34 @@ G4double PENMaterials::LArRayLength(const G4double lambda, const G4double temp)
     return (1.0 / h);
 }
 
+G4double PENMaterials::LArRayLength1(G4double lambda, G4double temp)
+{
+    G4double dyne = 1.0e-5 * newton;
+    //static const G4double LArKT = 2.18e-10 * cm2 / dyne; // LAr isothermal compressibility
+    //static const G4double k = 1.380658e-23 * joule / kelvin; // the Boltzmann constant
+    G4double LArKT = 2.18e-10 * cm2 / dyne; // LAr isothermal compressibility
+    G4double k = 1.380658e-23 * joule / kelvin; // the Boltzmann constant
+    G4double h;
+    h = LArEpsilon1(lambda);
+    if (h < 1.00000001) h = 1.00000001; // just a precaution
+    h = (h - 1.0) * (h + 2.0); // the "dielectric constant" dependance
+    h *= h; // take the square
+    h *= LArKT * temp * k; // compressibility * temp * Boltzmann constant
+    h /= lambda * lambda * lambda * lambda; // (lambda)^4
+    h *= 9.18704494231105429; // (2 * Pi / 3)^3
+    if (h < (1.0 / (10.0 * km))) h = 1.0 / (10.0 * km); // just a precaution
+    if (h > (1.0 / (0.1 * nanometer))) h = 1.0 / (0.1 * nanometer); // just a precaution
+    return (1.0 / h);
+}
+
 G4double PENMaterials::ArScintillationSpectrum(const G4double kk)
+{
+    G4double waveL;
+    waveL = exp(-0.5 * ((kk - 128.0) / (2.929)) * ((kk - 128.0) / (2.929)));
+    return waveL;
+}
+
+G4double PENMaterials::ArScintillationSpectrum1(G4double kk)
 {
     G4double waveL;
     waveL = exp(-0.5 * ((kk - 128.0) / (2.929)) * ((kk - 128.0) / (2.929)));

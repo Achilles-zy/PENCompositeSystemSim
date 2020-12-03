@@ -43,9 +43,11 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4LogicalVolume* ConstructBEGe();
         G4LogicalVolume* ConstructA1(G4double WireLength);
         G4LogicalVolume* ConstructA2(G4double WireLength);
-        G4LogicalVolume* ConstructSArBrick();
+        G4LogicalVolume* ConstructContainerBrick();
+        G4LogicalVolume* ConstructStringBoxBrick();
         G4LogicalVolume* ConstructOuterReflector();
         G4LogicalVolume* ConstructInnerReflector();
+        G4LogicalVolume* ConstructReflector();
         G4LogicalVolume* ConstructSiPMArray();
         G4LogicalVolume* ConstructSArSiPM();
 
@@ -114,7 +116,8 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
 
 
     private:
-        G4VPhysicalVolume* physSArBrick;
+        G4VPhysicalVolume* physContainerBrick;
+        G4VPhysicalVolume* physStringBoxBrick;//String Box Brick
 		G4VPhysicalVolume* physBulk;
         G4VPhysicalVolume* physEnv;
         G4VPhysicalVolume* physSiPM0;
@@ -135,10 +138,13 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
 
         G4VPhysicalVolume* physWire;
         G4VPhysicalVolume* physPENShell;
+        G4VPhysicalVolume* physInnerShell;
+        G4VPhysicalVolume* physOuterShell;
         G4VPhysicalVolume* physOuterReflector;
         G4VPhysicalVolume* physInnerReflector;
-        G4VPhysicalVolume* physSArCrystal;
-        //G4LogicalVolume* logicPENShell;
+        G4VPhysicalVolume* physContainerCrystal;//Crystal in Container
+        G4VPhysicalVolume* physStringBoxCrystal;//Crystal in String Box
+        G4LogicalVolume* logicStringBoxCrystal;
         G4Tubs* solidSideSiPM;
 
         PENMaterials* matconstructor;
@@ -215,7 +221,7 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4bool CheckOverlaps;
         G4bool ifOuterReflector;
         G4bool ifInnerReflector;
-        
+        G4bool ifReflector;
 };
 
 inline const G4VPhysicalVolume* PENDetectorConstruction::GetPENShell() const

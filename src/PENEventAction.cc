@@ -167,7 +167,7 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
 
     G4int evtID = evt->GetEventID();
 
-    if (evtID % 2000 == 0) {
+    if (evtID % 5000 == 0) {
         G4cout << evtID << G4endl;
     }
 

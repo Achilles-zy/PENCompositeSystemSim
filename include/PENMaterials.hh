@@ -30,6 +30,12 @@ public:
   G4double ArScintillationSpectrum(const G4double kk);
   //inline G4Material* Get_ArgonLiquid() { return fArgonLiquid; }
 
+  G4double LArRefIndex1(G4double lambda);
+  G4double LArEpsilon1(G4double lambda);
+  G4double LArRayLength1(G4double lambda, G4double temp);
+  G4double ArScintillationSpectrum1(G4double kk);
+  //inline G4Material* Get_ArgonLiquid() { return fArgonLiquid; }
+
   void Register_TPB_Properties();
   void InitializeTPBSpectra();
   G4double TPBEmissionSpectrum(G4double energy);
@@ -59,6 +65,8 @@ public:
 private:
   G4double lightYieldAntracene;
   static const G4double LambdaE;
+  //const G4double LambdaE = twopi * 1.973269602e-16 * m * GeV;;
+
   G4Material* fArgonLiquid;
   G4Material* fTPB;
   G4Material* fFiber_material;
