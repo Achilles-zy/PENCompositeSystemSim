@@ -40,13 +40,16 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4LogicalVolume* ConstructOuterShell();
         G4LogicalVolume* ConstructInnerShell();
         G4LogicalVolume* ConstructPENShell();
+        G4LogicalVolume* ConstructCSGOuterShell();
+        G4LogicalVolume* ConstructCSGInnerShell();
+        G4LogicalVolume* ConstructCSGPENShell();
         G4LogicalVolume* ConstructBEGe();
         G4LogicalVolume* ConstructA1(G4double WireLength);
         G4LogicalVolume* ConstructA2(G4double WireLength);
         G4LogicalVolume* ConstructContainerBrick();
         G4LogicalVolume* ConstructStringBoxBrick();
-        G4LogicalVolume* ConstructOuterReflector();
-        G4LogicalVolume* ConstructInnerReflector();
+        G4LogicalVolume* ConstructOuterReflector();//Outer Reflector of OuterShell
+        G4LogicalVolume* ConstructInnerReflector();//Inner Reflector of OuterShell
         G4LogicalVolume* ConstructReflector();
         G4LogicalVolume* ConstructSiPMArray();
         G4LogicalVolume* ConstructSArSiPM();
@@ -92,6 +95,10 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
 
         G4String GetMode() {
             return fMode;
+        }
+
+        G4String GetReflectorType() {
+            return fReflectorType;
         }
 
         G4int GetPENPropertiesID() {

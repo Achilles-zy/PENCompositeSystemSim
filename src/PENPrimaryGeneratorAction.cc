@@ -17,7 +17,7 @@ PENPrimaryGeneratorAction::PENPrimaryGeneratorAction(PENDetectorConstruction* de
 	PrimaryE(0),
 	InitialE(1 * keV),
 	PrimaryName(""),
-	SrcType("PENShell")
+	SrcType("InnerShell")
 {
     fPENGPS = new G4GeneralParticleSource();
 	fPrimaryMessenger = new PENPrimaryGeneratorMessenger(this);
@@ -91,6 +91,32 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
 
 			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("PENShell");
+		}
+		else if (SrcType == "InnerShell") {
+			G4double Radius = fDetCons->GetPENShellRadius();
+			G4double Length = fDetCons->GetPENShellLength();
+
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius * 2);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
+
+			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("InnerShell");
+		}
+		else if (SrcType == "OuterShell") {
+			G4double Radius = fDetCons->GetPENShellRadius();
+			G4double Length = fDetCons->GetPENShellLength();
+
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius * 2);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
+
+			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("OuterShell");
 		}
 		else if (SrcType == "Point") {
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Point");

@@ -32,7 +32,7 @@ PENPrimaryGeneratorMessenger::PENPrimaryGeneratorMessenger(PENPrimaryGeneratorAc
   cmdSetSrcType = new G4UIcmdWithAString("/PEN/src/type", this);
   cmdSetSrcType->SetGuidance("Choose the type of source");
   cmdSetSrcType->SetParameterName("SrcType",true);
-  cmdSetSrcType->SetDefaultValue("Wire");
+  cmdSetSrcType->SetDefaultValue("PENShell");
   cmdSetSrcType->AvailableForStates(G4State_PreInit, G4State_Idle);
 }
 
