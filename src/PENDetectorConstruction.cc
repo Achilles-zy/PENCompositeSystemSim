@@ -84,6 +84,8 @@ PENDetectorConstruction::PENDetectorConstruction() :
 	physStringBoxBrick(nullptr),
 	physStringBoxCrystal(nullptr),//Crystal in String Box
 	//logicPENShell(nullptr),
+	logicContainerCrystal(nullptr),
+	logicStringBoxCrystal(nullptr),
 	solidSideSiPM(nullptr)
 {
 	fDetectorMessenger = new PENDetectorMessenger(this);
@@ -95,8 +97,8 @@ PENDetectorConstruction::PENDetectorConstruction() :
 	fABSFile = "PEN_ABS";
 	fConfine = "PENShell";
 	fWireType = "A1";
-	fReflectorType = "PolishedESRGrease_LUT";
-	fMode = "Unit";
+	fReflectorType = "PolishedESR_LUT";
+	fMode = "Array-1";
 	fWirePos = G4ThreeVector();
 	fWireRadius = 0.7 * mm;
 	fWireLength = 20 * cm;
@@ -557,14 +559,13 @@ G4VPhysicalVolume* PENDetectorConstruction::Construct()
 	if (fMode == "SArUnit") {
 		return ConstructSArUnit();
 	}
-	if (fMode == "Array_1") {
+	if (fMode == "Array-1") {
 		return ConstructArray_1();
 	}
 	else {
 		G4cout << "Error: Mode not fount!" << G4endl;
 	}
 }
-
 
 G4LogicalVolume* PENDetectorConstruction::ConstructBEGe() {
 
@@ -915,7 +916,7 @@ G4LogicalVolume* PENDetectorConstruction::ConstructCSGInnerShell() {
 
 G4LogicalVolume* PENDetectorConstruction::ConstructOuterShell() {
 	G4String Ver = "IV";
-	auto outermesh = CADMesh::TessellatedMesh::FromSTL("../models/OuterShell-" + Ver + "-Standard.stl");
+	auto outermesh = CADMesh::TessellatedMesh::FromSTL("../models/OuterShell-" + Ver + ".stl");
 	G4VSolid* solidOuterShell = outermesh->GetSolid();
 
 	auto logicOuterShell = new G4LogicalVolume(solidOuterShell, matPEN, "logicPENShell");
@@ -1061,13 +1062,14 @@ G4LogicalVolume* PENDetectorConstruction::ConstructContainerBrick() {
 	G4VSolid* solidContainerCrystal = ContainerCrystalmesh->GetSolid();
 	G4VSolid* solidContainerBrick = ContainerBrickmesh->GetSolid();
 
-	auto solidContainer = new G4SubtractionSolid("solidSArCrystal", solidContainerBrick, solidContainerCrystal, 0, G4ThreeVector(0, 1 * cm, 0));
-	auto logicContainerBrick = new G4LogicalVolume(solidContainerBrick, matPEN, "logicSArBrick");
-	auto logicContainerCrystal = new G4LogicalVolume(solidContainerCrystal, matLAr, "logicSArCrystal");
+	auto solidContainer = new G4SubtractionSolid("solidContainer", solidContainerBrick, solidContainerCrystal, 0, G4ThreeVector(0, 1 * cm, 0));
+	auto logicContainerBrick = new G4LogicalVolume(solidContainerBrick, matPEN, "logicContainerBrick");
+	logicContainerCrystal = new G4LogicalVolume(solidContainerCrystal, matLAr, "logicContainerCrystal");
 	//auto logicSArContainer = new G4LogicalVolume(solidSArCrystal, matPEN, "logicSArContainer");
 
 	physContainerCrystal = new G4PVPlacement(0, G4ThreeVector(0, 0, 0), logicContainerCrystal, "SArCrystal", logicContainerBrick, false, 0, CheckOverlaps);
 	//auto physSArContainer = new G4PVPlacement(0, G4ThreeVector(), logicSArContainer, "SArContainer", logicSArBrick, false, 0, CheckOverlaps);
+
 
 	return logicContainerBrick;
 }
@@ -1078,7 +1080,7 @@ G4LogicalVolume* PENDetectorConstruction::ConstructStringBoxBrick() {
 	auto StringBoxBrickmesh = CADMesh::TessellatedMesh::FromSTL("../models/StringBoxSolid-" + Ver + ".stl");
 	G4VSolid* solidStringBoxCrystal = StringBoxCrystalmesh->GetSolid();
 	G4VSolid* solidStringBoxBrick = StringBoxBrickmesh->GetSolid();
-
+	
 	auto solidStringBox = new G4SubtractionSolid("solidStringBox", solidStringBoxBrick, solidStringBoxCrystal, 0, G4ThreeVector(0, 1 * cm, 0));
 	auto logicStringBoxBrick = new G4LogicalVolume(solidStringBoxBrick, matPEN, "logicStringBoxBrick");
 	logicStringBoxCrystal = new G4LogicalVolume(solidStringBoxCrystal, matLAr, "logicStringBoxCrystal");
@@ -1106,11 +1108,170 @@ G4LogicalVolume* PENDetectorConstruction::ConstructSiPMArray() {
 	physSiPM1 = new G4PVPlacement(0, G4ThreeVector(-offset1, offset2, 0), logicSiPM, "physSiPM1", logicSiPMArray, false, 1, CheckOverlaps);
 	physSiPM2 = new G4PVPlacement(0, G4ThreeVector(offset1, -offset2, 0), logicSiPM, "physSiPM2", logicSiPMArray, false, 2, CheckOverlaps);
 	physSiPM3 = new G4PVPlacement(0, G4ThreeVector(-offset1, -offset2, 0), logicSiPM, "physSiPM3", logicSiPMArray, false, 3, CheckOverlaps);
+	
+	G4OpticalSurface* SiPM_LN2 = new G4OpticalSurface("SiPM_LN2");
+	SiPM_LN2->SetType(dielectric_LUTDAVIS);
+	SiPM_LN2->SetModel(DAVIS);
+	SiPM_LN2->SetFinish(Detector_LUT);
+
+	const G4int NUMENTRIES_CHIP = 11;
+	const double hc = 6.62606876 * 2.99792458 * 100. / 1.602176462;
+	G4double sipm_pp[NUMENTRIES_CHIP] = { hc / 600. * eV, hc / 590. * eV, hc / 580. * eV, hc / 570. * eV, hc / 560. * eV, hc / 550. * eV, hc / 540. * eV, hc / 530. * eV, hc / 520. * eV,hc / 510. * eV,hc / 500. * eV };
+	G4double sipm_sl[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_ss[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_bs[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_rindex[NUMENTRIES_CHIP] = { 1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406 };
+	G4double sipm_reflectivity[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	// G4double sipm_efficiency[NUMENTRIES_CHIP] = {0.20,0.21,0.23,0.25,0.26,0.28,0.30,0.32,0.34,0.36,0.38};
+	G4double sipm_efficiency[NUMENTRIES_CHIP] = { 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0 };
+
+	G4MaterialPropertiesTable* SIPM_MPT_Surf = new G4MaterialPropertiesTable();
+	// SIPM_MPT_Surf->AddProperty("SPECULARLOBECONSTANT",sipm_pp,sipm_sl,NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("SPECULARSPIKECONSTANT",sipm_pp,sipm_ss,NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("BACKSCATTERCONSTANT",sipm_pp,sipm_bs,NUMENTRIES_CHIP);
+	SIPM_MPT_Surf->AddProperty("REFLECTIVITY", sipm_pp, sipm_reflectivity, NUMENTRIES_CHIP);
+	SIPM_MPT_Surf->AddProperty("EFFICIENCY", sipm_pp, sipm_efficiency, NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("RINDEX",sipm_pp,sipm_rindex,NUMENTRIES_CHIP);
+
+	SiPM_LN2->SetMaterialPropertiesTable(SIPM_MPT_Surf);
+
+	G4LogicalSkinSurface* SiPM_SAr_LBS_0 = new G4LogicalSkinSurface("SiPM_SAr_LBS_0", logicSiPM, SiPM_LN2);
+	
 	return logicSiPMArray;
 }
 
-G4LogicalVolume* PENDetectorConstruction::ConstructSArSiPM() {
+G4LogicalVolume* PENDetectorConstruction::ConstructContainerSiPMArray() {
+	G4double SiPMThickness = 0.5 * mm;
+	G4double TPBThickness = 2 * micrometer;
+	G4Box* solidSiPMArray = new G4Box("solidSiPMArray", 3 * cm, 3 * cm, SiPMThickness / 2 + 0.5 * mm);
+	G4LogicalVolume* logicSiPMArray = new G4LogicalVolume(solidSiPMArray, matLAr, "logicSiPMArray");
 
+	G4double SiPMWidth = 1.2 * cm;
+	G4double SiPMLength = 1.5 * cm;
+
+	G4Box* solidSiPM = new G4Box("solidSiPM", SiPMWidth / 2, SiPMLength / 2, SiPMThickness / 2);
+	G4LogicalVolume* logicSiPM = new G4LogicalVolume(solidSiPM, matSi, "logicSiPM");
+	G4Box* solidTPB = new G4Box("solidTPB", SiPMWidth / 2, SiPMLength / 2, TPBThickness / 2);
+	G4LogicalVolume* logicTPB = new G4LogicalVolume(solidTPB, matTPB, "logicTPB");
+	G4double offset1 = SiPMWidth / 2 + 0.3 * mm;
+	G4double offset2 = SiPMLength / 2 + 0.3 * mm;
+
+	physSiPM0 = new G4PVPlacement(0, G4ThreeVector(offset1, offset2, 0), logicSiPM, "physSiPM0", logicSiPMArray, false, 0, CheckOverlaps);
+	physSiPM1 = new G4PVPlacement(0, G4ThreeVector(-offset1, offset2, 0), logicSiPM, "physSiPM1", logicSiPMArray, false, 1, CheckOverlaps);
+	physSiPM2 = new G4PVPlacement(0, G4ThreeVector(offset1, -offset2, 0), logicSiPM, "physSiPM2", logicSiPMArray, false, 2, CheckOverlaps);
+	physSiPM3 = new G4PVPlacement(0, G4ThreeVector(-offset1, -offset2, 0), logicSiPM, "physSiPM3", logicSiPMArray, false, 3, CheckOverlaps);
+
+	auto physTPB0 = new G4PVPlacement(0, G4ThreeVector(offset1, offset2, SiPMThickness / 2 + TPBThickness / 2), logicTPB, "physTPB0", logicSiPMArray, false, 0, CheckOverlaps);
+	auto physTPB1 = new G4PVPlacement(0, G4ThreeVector(-offset1, offset2, SiPMThickness / 2 + TPBThickness / 2), logicTPB, "physTPB1", logicSiPMArray, false, 1, CheckOverlaps);
+	auto physTPB2 = new G4PVPlacement(0, G4ThreeVector(offset1, -offset2, SiPMThickness / 2 + TPBThickness / 2), logicTPB, "physTPB2", logicSiPMArray, false, 2, CheckOverlaps);
+	auto physTPB3 = new G4PVPlacement(0, G4ThreeVector(-offset1, -offset2, SiPMThickness / 2 + TPBThickness / 2), logicTPB, "physTPB3", logicSiPMArray, false, 3, CheckOverlaps);
+	auto physTPB4 = new G4PVPlacement(0, G4ThreeVector(offset1, offset2, -SiPMThickness / 2 - TPBThickness / 2), logicTPB, "physTPB4", logicSiPMArray, false, 4, CheckOverlaps);
+	auto physTPB5 = new G4PVPlacement(0, G4ThreeVector(-offset1, offset2, -SiPMThickness / 2 - TPBThickness / 2), logicTPB, "physTPB5", logicSiPMArray, false, 5, CheckOverlaps);
+	auto physTPB6 = new G4PVPlacement(0, G4ThreeVector(offset1, -offset2, -SiPMThickness / 2 - TPBThickness / 2), logicTPB, "physTPB6", logicSiPMArray, false, 6, CheckOverlaps);
+	auto physTPB7 = new G4PVPlacement(0, G4ThreeVector(-offset1, -offset2, -SiPMThickness / 2 - TPBThickness / 2), logicTPB, "physTPB7", logicSiPMArray, false, 7, CheckOverlaps);
+
+	G4OpticalSurface* SiPM_SAr = new G4OpticalSurface("SiPM_SAr");
+	SiPM_SAr->SetType(dielectric_LUTDAVIS);
+	SiPM_SAr->SetModel(DAVIS);
+	SiPM_SAr->SetFinish(Detector_LUT);
+
+	const G4int NUMENTRIES_CHIP = 11;
+	const double hc = 6.62606876 * 2.99792458 * 100. / 1.602176462;
+	G4double sipm_pp[NUMENTRIES_CHIP] = { hc / 600. * eV, hc / 590. * eV, hc / 580. * eV, hc / 570. * eV, hc / 560. * eV, hc / 550. * eV, hc / 540. * eV, hc / 530. * eV, hc / 520. * eV,hc / 510. * eV,hc / 500. * eV };
+	G4double sipm_sl[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_ss[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_bs[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_rindex[NUMENTRIES_CHIP] = { 1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406 };
+	G4double sipm_reflectivity[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	// G4double sipm_efficiency[NUMENTRIES_CHIP] = {0.20,0.21,0.23,0.25,0.26,0.28,0.30,0.32,0.34,0.36,0.38};
+	G4double sipm_efficiency[NUMENTRIES_CHIP] = { 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0 };
+
+	G4MaterialPropertiesTable* SIPM_MPT_Surf = new G4MaterialPropertiesTable();
+	// SIPM_MPT_Surf->AddProperty("SPECULARLOBECONSTANT",sipm_pp,sipm_sl,NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("SPECULARSPIKECONSTANT",sipm_pp,sipm_ss,NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("BACKSCATTERCONSTANT",sipm_pp,sipm_bs,NUMENTRIES_CHIP);
+	SIPM_MPT_Surf->AddProperty("REFLECTIVITY", sipm_pp, sipm_reflectivity, NUMENTRIES_CHIP);
+	SIPM_MPT_Surf->AddProperty("EFFICIENCY", sipm_pp, sipm_efficiency, NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("RINDEX",sipm_pp,sipm_rindex,NUMENTRIES_CHIP);
+
+	SiPM_SAr->SetMaterialPropertiesTable(SIPM_MPT_Surf);
+
+	G4OpticalSurface* TPB_SAr = new G4OpticalSurface("SiPM_SAr");
+	TPB_SAr->SetType(dielectric_LUTDAVIS);
+	TPB_SAr->SetModel(DAVIS);
+	TPB_SAr->SetFinish(Detector_LUT);
+
+	G4LogicalSkinSurface* SiPM_SAr_LBS_0 = new G4LogicalSkinSurface("SiPM_SAr_LBS_0", logicSiPM, SiPM_SAr);
+	G4LogicalSkinSurface* TPB_SAr_LBS_0 = new G4LogicalSkinSurface("SiPM_SAr_LBS_0", logicTPB, TPB_SAr);
+
+	return logicSiPMArray;
+}
+
+G4LogicalVolume* PENDetectorConstruction::ConstructSArSiPMArray() {
+	G4double SiPMThickness = 0.5 * mm;
+	G4double TPBThickness = 2 * micrometer;
+	G4Box* solidSiPMArray = new G4Box("solidSiPMArray", 3 * cm, 3 * cm, SiPMThickness / 2 + 0.5 * mm);
+	G4LogicalVolume* logicSiPMArray = new G4LogicalVolume(solidSiPMArray, matLAr, "logicSiPMArray");
+
+	G4double SiPMWidth = 1.2 * cm;
+	G4double SiPMLength = 1.5 * cm;
+	
+	G4Box* solidSiPM = new G4Box("solidSiPM", SiPMWidth / 2, SiPMLength / 2, SiPMThickness / 2);
+	G4LogicalVolume* logicSiPM = new G4LogicalVolume(solidSiPM, matSi, "logicSiPM");
+	G4Box* solidTPB = new G4Box("solidTPB", SiPMWidth / 2, SiPMLength / 2, TPBThickness / 2);
+	G4LogicalVolume* logicTPB = new G4LogicalVolume(solidTPB, matTPB, "logicTPB");
+	G4double offset1 = SiPMWidth / 2 + 0.3 * mm;
+	G4double offset2 = SiPMLength / 2 + 0.3 * mm;
+
+	physSiPM0 = new G4PVPlacement(0, G4ThreeVector(offset1, offset2, 0), logicSiPM, "physSiPM0", logicSiPMArray, false, 0, CheckOverlaps);
+	physSiPM1 = new G4PVPlacement(0, G4ThreeVector(-offset1, offset2, 0), logicSiPM, "physSiPM1", logicSiPMArray, false, 1, CheckOverlaps);
+	physSiPM2 = new G4PVPlacement(0, G4ThreeVector(offset1, -offset2, 0), logicSiPM, "physSiPM2", logicSiPMArray, false, 2, CheckOverlaps);
+	physSiPM3 = new G4PVPlacement(0, G4ThreeVector(-offset1, -offset2, 0), logicSiPM, "physSiPM3", logicSiPMArray, false, 3, CheckOverlaps);
+
+	auto physTPB0 = new G4PVPlacement(0, G4ThreeVector(offset1, offset2, SiPMThickness / 2 + TPBThickness / 2), logicTPB, "physTPB0", logicSiPMArray, false, 0, CheckOverlaps);
+	auto physTPB1 = new G4PVPlacement(0, G4ThreeVector(-offset1, offset2, SiPMThickness / 2 + TPBThickness / 2), logicTPB, "physTPB1", logicSiPMArray, false, 1, CheckOverlaps);
+	auto physTPB2 = new G4PVPlacement(0, G4ThreeVector(offset1, -offset2, SiPMThickness / 2 + TPBThickness / 2), logicTPB, "physTPB2", logicSiPMArray, false, 2, CheckOverlaps);
+	auto physTPB3 = new G4PVPlacement(0, G4ThreeVector(-offset1, -offset2, SiPMThickness / 2 + TPBThickness / 2), logicTPB, "physTPB3", logicSiPMArray, false, 3, CheckOverlaps);
+	auto physTPB4 = new G4PVPlacement(0, G4ThreeVector(offset1, offset2, -SiPMThickness / 2 - TPBThickness / 2), logicTPB, "physTPB4", logicSiPMArray, false, 4, CheckOverlaps);
+	auto physTPB5 = new G4PVPlacement(0, G4ThreeVector(-offset1, offset2, -SiPMThickness / 2 - TPBThickness / 2), logicTPB, "physTPB5", logicSiPMArray, false, 5, CheckOverlaps);
+	auto physTPB6 = new G4PVPlacement(0, G4ThreeVector(offset1, -offset2, -SiPMThickness / 2 - TPBThickness / 2), logicTPB, "physTPB6", logicSiPMArray, false, 6, CheckOverlaps);
+	auto physTPB7 = new G4PVPlacement(0, G4ThreeVector(-offset1, -offset2, -SiPMThickness / 2 - TPBThickness / 2), logicTPB, "physTPB7", logicSiPMArray, false, 7, CheckOverlaps);
+
+	G4OpticalSurface* SiPM_SAr = new G4OpticalSurface("SiPM_SAr");
+	SiPM_SAr->SetType(dielectric_LUTDAVIS);
+	SiPM_SAr->SetModel(DAVIS);
+	SiPM_SAr->SetFinish(Detector_LUT);
+
+	const G4int NUMENTRIES_CHIP = 11;
+	const double hc = 6.62606876 * 2.99792458 * 100. / 1.602176462;
+	G4double sipm_pp[NUMENTRIES_CHIP] = { hc / 600. * eV, hc / 590. * eV, hc / 580. * eV, hc / 570. * eV, hc / 560. * eV, hc / 550. * eV, hc / 540. * eV, hc / 530. * eV, hc / 520. * eV,hc / 510. * eV,hc / 500. * eV };
+	G4double sipm_sl[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_ss[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_bs[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_rindex[NUMENTRIES_CHIP] = { 1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406 };
+	G4double sipm_reflectivity[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	// G4double sipm_efficiency[NUMENTRIES_CHIP] = {0.20,0.21,0.23,0.25,0.26,0.28,0.30,0.32,0.34,0.36,0.38};
+	G4double sipm_efficiency[NUMENTRIES_CHIP] = { 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0 };
+
+	G4MaterialPropertiesTable* SIPM_MPT_Surf = new G4MaterialPropertiesTable();
+	// SIPM_MPT_Surf->AddProperty("SPECULARLOBECONSTANT",sipm_pp,sipm_sl,NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("SPECULARSPIKECONSTANT",sipm_pp,sipm_ss,NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("BACKSCATTERCONSTANT",sipm_pp,sipm_bs,NUMENTRIES_CHIP);
+	SIPM_MPT_Surf->AddProperty("REFLECTIVITY", sipm_pp, sipm_reflectivity, NUMENTRIES_CHIP);
+	SIPM_MPT_Surf->AddProperty("EFFICIENCY", sipm_pp, sipm_efficiency, NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("RINDEX",sipm_pp,sipm_rindex,NUMENTRIES_CHIP);
+
+	SiPM_SAr->SetMaterialPropertiesTable(SIPM_MPT_Surf);
+
+	G4OpticalSurface* TPB_SAr = new G4OpticalSurface("SiPM_SAr");
+	TPB_SAr->SetType(dielectric_LUTDAVIS);
+	TPB_SAr->SetModel(DAVIS);
+	TPB_SAr->SetFinish(Detector_LUT);
+
+	G4LogicalSkinSurface* SiPM_SAr_LBS_0 = new G4LogicalSkinSurface("SiPM_SAr_LBS_0", logicSiPM, SiPM_SAr);
+	G4LogicalSkinSurface* TPB_SAr_LBS_0 = new G4LogicalSkinSurface("SiPM_SAr_LBS_0", logicTPB, TPB_SAr);
+
+	return logicSiPMArray;
 }
 
 G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
@@ -1183,13 +1344,6 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 		G4cout << "Type does not exist!" << G4endl;
 	}
 
-	G4OpticalSurface* Wire_LN2 = new G4OpticalSurface("Wire_LN2");
-	G4LogicalBorderSurface* Wire_LN2_LBS = new G4LogicalBorderSurface("Wire_LN2_LBS", physEnv, physWire, Wire_LN2);
-	Wire_LN2 = dynamic_cast <G4OpticalSurface*>(Wire_LN2_LBS->GetSurface(physEnv, physWire)->GetSurfaceProperty());
-	Wire_LN2->SetType(dielectric_LUTDAVIS);
-	Wire_LN2->SetModel(DAVIS);
-	Wire_LN2->SetFinish(Polished_LUT);
-
 	//=============================================================//
 	//                          PENShell                           //
 	//=============================================================//
@@ -1209,6 +1363,17 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 	G4LogicalVolume* logicInnerShell = ConstructCSGInnerShell();
 	physInnerShell = new G4PVPlacement(rotPENShell1, PENShellPlacement, logicInnerShell, "PENShell", logicEnv, false, 0, checkOverlaps);
 
+	//=============================================================//
+	//                            BEGe                             //
+	//=============================================================//
+
+	G4LogicalVolume* logicTotalCrystal = ConstructBEGe();
+	auto physDet = new G4PVPlacement(0, G4ThreeVector(0, 0, -1 * mm), logicTotalCrystal, "PhysDet", logicInnerShell, false, 0, checkOverlaps);
+
+	//=============================================================//
+	//                       Optical Surfaces                      //
+	//=============================================================//
+
 	G4OpticalSurface* scintWrap = new G4OpticalSurface("ScintWrap");
 	scintWrap->SetModel(unified);
 	scintWrap->SetType(dielectric_dielectric);
@@ -1221,7 +1386,7 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 	scintWrapProperty->AddProperty("REFLECTIVITY", energyReflector, reflectivity, num);
 	scintWrap->SetMaterialPropertiesTable(scintWrapProperty);
 
-	G4OpticalSurface* PEN_LN2_Ref = new G4OpticalSurface("PEN_LN2");
+	G4OpticalSurface* PEN_LN2_Ref = new G4OpticalSurface("PEN_LN2_Ref");
 	if (fReflectorType == "polishedvm2000air") {
 		PEN_LN2_Ref->SetType(dielectric_LUT);
 		PEN_LN2_Ref->SetModel(LUT);
@@ -1268,21 +1433,14 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 		PEN_LN2_Ref->SetFinish(Polished_LUT);
 	}
 
+	G4OpticalSurface* PEN_LN2_Ref1 = new G4OpticalSurface("PEN_LN2_Ref1");
+	PEN_LN2_Ref1->SetType(dielectric_LUTDAVIS);
+	PEN_LN2_Ref1->SetModel(DAVIS);
+	PEN_LN2_Ref1->SetFinish(PolishedESR_LUT);
 	G4OpticalSurface* PEN_LN2 = new G4OpticalSurface("PEN_LN2");
 	PEN_LN2->SetType(dielectric_LUTDAVIS);
 	PEN_LN2->SetModel(LUT);
 	PEN_LN2->SetFinish(Polished_LUT);
-
-	G4LogicalBorderSurface* OuterShell_LN2_LBS = new G4LogicalBorderSurface("OuterShell_LN2_LBS", physEnv, physOuterShell, PEN_LN2_Ref);
-	//G4LogicalBorderSurface* LN2_OuterShell_LBS = new G4LogicalBorderSurface("OuterShell_LN2_LBS", physOuterShell, physEnv,  PEN_LN2_Ref);
-	G4LogicalBorderSurface* InnerShell_LN2_LBS = new G4LogicalBorderSurface("InnerShell_LN2_LBS", physEnv, physInnerShell, PEN_LN2);
-
-	//=============================================================//
-	//                            BEGe                             //
-	//=============================================================//
-
-	G4LogicalVolume* logicTotalCrystal = ConstructBEGe();
-	auto physDet = new G4PVPlacement(0, G4ThreeVector(0, 0, -1 * mm), logicTotalCrystal, "PhysDet", logicInnerShell, false, 0, checkOverlaps);
 
 	G4OpticalSurface* Ge_LN2 = new G4OpticalSurface("Ge_LN2");
 	Ge_LN2->SetType(dielectric_metal);
@@ -1293,12 +1451,21 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 	Ge_PEN->SetModel(glisur);
 	Ge_PEN->SetFinish(polished);
 
+	G4OpticalSurface* Wire_LN2 = new G4OpticalSurface("Wire_LN2");
+	Wire_LN2->SetType(dielectric_LUTDAVIS);
+	Wire_LN2->SetModel(DAVIS);
+	Wire_LN2->SetFinish(Polished_LUT);
+
+	G4LogicalBorderSurface* Wire_LN2_LBS = new G4LogicalBorderSurface("Wire_LN2_LBS", physEnv, physWire, Wire_LN2);
+	G4LogicalBorderSurface* OuterShell_LN2_LBS = new G4LogicalBorderSurface("OuterShell_LN2_LBS", physEnv, physOuterShell, PEN_LN2_Ref);
+	//G4LogicalBorderSurface* LN2_OuterShell_LBS = new G4LogicalBorderSurface("OuterShell_LN2_LBS", physOuterShell, physEnv,  PEN_LN2_Ref);
+	G4LogicalBorderSurface* InnerShell_LN2_LBS = new G4LogicalBorderSurface("InnerShell_LN2_LBS", physEnv, physInnerShell, PEN_LN2);
 	G4LogicalBorderSurface* Ge_LN2_LBS = new G4LogicalBorderSurface("Ge_LN2_LBS", physEnv, physDet, Ge_LN2);
-	G4LogicalBorderSurface* Ge_PEN_LBS = new G4LogicalBorderSurface("Ge_PEN_LBS", physEnv, physDet, Ge_PEN);
+	G4LogicalBorderSurface* Ge_PEN_LBS = new G4LogicalBorderSurface("Ge_PEN_LBS", physInnerShell, physDet, Ge_PEN);
 
 
 	//=============================================================//
-	//                          REflector                           //
+	//                          REflector                          //
 	//=============================================================//
 
 	if (ifOuterReflector == true) {
@@ -1306,24 +1473,8 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 		physOuterReflector = new G4PVPlacement(rotPENShell, PENShellPlacement, logicReflector, "Reflector", logicEnv, false, 0, checkOverlaps);
 
 		//Reflector
-		G4OpticalSurface* PEN_OuterReflector = new G4OpticalSurface("PEN_Reflector");
-		G4LogicalBorderSurface* PEN_OuterReflector_LBS = new G4LogicalBorderSurface("PEN_OuterReflector_LBS", physOuterReflector, physPENShell, PEN_OuterReflector);
-		PEN_OuterReflector = dynamic_cast <G4OpticalSurface*>(PEN_OuterReflector_LBS->GetSurface(physOuterReflector, physPENShell)->GetSurfaceProperty());
-		PEN_OuterReflector->SetType(dielectric_LUTDAVIS);
-		PEN_OuterReflector->SetModel(DAVIS);
-		if (fReflectorType == "ESR") {
-			PEN_OuterReflector->SetFinish(PolishedESR_LUT);
-		}
-		else if (fReflectorType == "ESRGrease") {
-			PEN_OuterReflector->SetFinish(PolishedESRGrease_LUT);
-		}
-		else if (fReflectorType == "Teflon") {
-			PEN_OuterReflector->SetFinish(PolishedTeflon_LUT);
-		}
-		else {
-			G4cout << "Reflector type not found! Using default ESR LUT." << G4endl;
-			PEN_OuterReflector->SetFinish(PolishedESR_LUT);
-		}
+		G4LogicalBorderSurface* PEN_OuterReflector_1_LBS = new G4LogicalBorderSurface("PEN_OuterReflector_LBS", physOuterReflector, physOuterShell, PEN_LN2_Ref);
+		G4LogicalBorderSurface* PEN_OuterReflector_2_LBS = new G4LogicalBorderSurface("PEN_OuterReflector_LBS", physOuterShell, physOuterReflector, PEN_LN2_Ref);
 	}
 
 	if (ifInnerReflector == true) {
@@ -1390,6 +1541,9 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 	physSiPMArray0 = new G4PVPlacement(rotSiPM0, G4ThreeVector(-166 * mm, 0, 0 * mm), logicSiPMArray, "SiPMArray0", logicEnv, false, 0, checkOverlaps);
 	physSiPMArray1 = new G4PVPlacement(rotSiPM0, G4ThreeVector(166 * mm, 0, 0 * mm), logicSiPMArray, "SiPMArray1", logicEnv, false, 1, checkOverlaps);
 
+	return physWorld;
+
+	/*
 	G4OpticalSurface* SiPM_LN2 = new G4OpticalSurface("SiPM_LN2");
 	SiPM_LN2->SetType(dielectric_LUTDAVIS);
 	SiPM_LN2->SetModel(DAVIS);
@@ -1423,9 +1577,426 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 	G4LogicalBorderSurface* SiPM_LN2_LBS_4 = new G4LogicalBorderSurface("SiPM_LN2_LBS_4", physEnv, physSiPM4, SiPM_LN2);
 	G4LogicalBorderSurface* SiPM_LN2_LBS_5 = new G4LogicalBorderSurface("SiPM_LN2_LBS_5", physEnv, physSiPM5, SiPM_LN2);
 	// G4LogicalBorderSurface* SiPM_LN2_LBS_P = new G4LogicalBorderSurface("SiPM_LN2_LBS_P", physEnv, physSiPMP, SiPM_LN2_P);
+	*/
+
+}
+
+G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
+	G4NistManager* nist = G4NistManager::Instance();
+	G4bool checkOverlaps = true;
+
+	//=============================================================//
+	//                        World&Envelope                       //
+	//=============================================================//
+
+	G4Material* world_mat = fVacuum;
+	G4Material* env_mat = matLN2;
+	G4Material* det_mat = matEnGe;
+
+	G4double world_size = 200 * cm;
+	G4double env_size = 180 * cm;
+	G4Box* solidWorld = new G4Box("solidWorld", 0.5 * world_size, 0.5 * world_size, 0.5 * world_size);
+	G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, world_mat, "logicWorld");
+	G4VPhysicalVolume* physWorld =
+		new G4PVPlacement(0,                     //no rotation
+			G4ThreeVector(),       //at (0,0,0)
+			logicWorld,            //its logical volume
+			"World",               //its name
+			0,                     //its mother  volume
+			false,                 //no boolean operation
+			0,                     //copy number
+			checkOverlaps);        //overlaps checking
+
+	G4Box* solidEnv = new G4Box("solidEnvelope", 0.5 * env_size, 0.5 * env_size, 0.5 * env_size);
+	G4LogicalVolume* logicEnv = new G4LogicalVolume(solidEnv, env_mat, "logicEnvelope");
+	physEnv = new G4PVPlacement(0, G4ThreeVector(), logicEnv, "Envelope", logicWorld, false, 0, checkOverlaps);
+
+	//=============================================================//
+	//                          StringBox                          //
+	//=============================================================//
+	auto rotStringBox = new G4RotationMatrix();
+	//rotStringBox->rotateZ(90 * degree);
+	rotStringBox->rotateX(90 * degree);
+	auto logicStringBoxBrick = ConstructStringBoxBrick();
+	physStringBoxBrick = new G4PVPlacement(rotStringBox, G4ThreeVector(), logicStringBoxBrick, "StringBox", logicEnv, false, 0, checkOverlaps);
+
+	//=============================================================//
+	//                           PENShell                          //
+	//=============================================================//
+
+	auto rotInnerPENShell = new G4RotationMatrix();
+	rotInnerPENShell->rotateX(90 * degree);
+	auto rotOuterPENShell = new G4RotationMatrix();
+	//G4ThreeVector PENShellPlacement =G4ThreeVector(0, 0, 34.1 * mm);
+	G4double OSConeHeight0 = 37.313 * mm;
+	G4ThreeVector PENShellPlacement = G4ThreeVector(0, 0, 0);
+	G4ThreeVector PENShellPlacement1 = G4ThreeVector(0, 0, OSConeHeight0 / 2);
+	//G4LogicalVolume* logicPENShell = ConstructCSGPENShell();
+	//physPENShell = new G4PVPlacement(rotPENShell, PENShellPlacement, logicPENShell, "PENShell", logicEnv, false, 0, checkOverlaps);
+
+	G4LogicalVolume* logicOuterShell = ConstructOuterShell();
+	//physOuterShell = new G4PVPlacement(rotOuterPENShell, PENShellPlacement, logicOuterShell, "PENShell", logicStringBoxCrystal, false, 0, checkOverlaps);
+
+	G4LogicalVolume* logicInnerShell = ConstructCSGInnerShell();
+	//physInnerShell = new G4PVPlacement(rotInnerPENShell, PENShellPlacement, logicInnerShell, "PENShell", logicStringBoxCrystal, false, 0, checkOverlaps);
+
+	//=============================================================//
+	//                             BEGe                            //
+	//=============================================================//
+	auto rotBEGe = new G4RotationMatrix();
+	G4LogicalVolume* logicTotalCrystal = ConstructBEGe();
+	auto physDet = new G4PVPlacement(rotBEGe, G4ThreeVector(0, 0, -1 * mm), logicTotalCrystal, "PhysDet", logicInnerShell, false, 0, checkOverlaps);
+
+
+	//=============================================================//
+	//                            SiPMs                            //
+	//=============================================================//
+
+	G4LogicalVolume* logicSiPMArray = ConstructSArSiPMArray();
+
+	auto rotSiPM0 = new G4RotationMatrix();
+	rotSiPM0->rotateX(90 * degree);
+
+	//physSiPMArray0 = new G4PVPlacement(rotSiPM0, G4ThreeVector(-166 * mm, 0, 0 * mm), logicSiPMArray, "SiPMArray0", logicStringBoxCrystal, false, 0, checkOverlaps);
+	//physSiPMArray1 = new G4PVPlacement(rotSiPM0, G4ThreeVector(166 * mm, 0, 0 * mm), logicSiPMArray, "SiPMArray1", logicStringBoxCrystal, false, 1, checkOverlaps);
+
+	//=============================================================//
+	//                             Unit                            //
+	//=============================================================//
+	G4AssemblyVolume* logicUnit = new G4AssemblyVolume();
+
+	// Rotation and translation of a plate inside the assembly
+	G4RotationMatrix* RotInnerShell = new G4RotationMatrix();
+	G4ThreeVector PosInnerShell = G4ThreeVector(0, 0, 0);
+	G4Transform3D TrInnerShell = G4Transform3D(*RotInnerShell, PosInnerShell);
+
+	G4RotationMatrix* RotOuterShell = new G4RotationMatrix();
+	RotOuterShell->rotateX(90 * degree);
+	G4ThreeVector PosOuterShell = G4ThreeVector(0, 0, 0);
+	G4Transform3D TrOuterShell = G4Transform3D(*RotOuterShell, PosOuterShell);
+
+	G4RotationMatrix* RotSArSiPM = new G4RotationMatrix();
+	RotSArSiPM->rotateY(90 * degree);
+	G4ThreeVector PosSArSiPM0 = G4ThreeVector(-166 * mm, 0, 0);
+	G4ThreeVector PosSArSiPM1 = G4ThreeVector(166 * mm, 0, 0);
+	G4ThreeVector PosSArSiPM2 = G4ThreeVector(179 * mm, 0, 37.5 * mm);
+	G4ThreeVector PosSArSiPM3 = G4ThreeVector(-179 * mm, 0, 37.5 * mm);
+
+	G4Transform3D TrPosSArSiPM0 = G4Transform3D(*RotSArSiPM, PosSArSiPM0);
+	G4Transform3D TrPosSArSiPM1 = G4Transform3D(*RotSArSiPM, PosSArSiPM1);
+	G4Transform3D TrPosSArSiPM2 = G4Transform3D(*RotSArSiPM, PosSArSiPM2);
+	G4Transform3D TrPosSArSiPM3 = G4Transform3D(*RotSArSiPM, PosSArSiPM3);
+
+	logicUnit->AddPlacedVolume(logicOuterShell, TrOuterShell);
+	logicUnit->AddPlacedVolume(logicInnerShell, TrInnerShell);
+	logicUnit->AddPlacedVolume(logicSiPMArray, TrPosSArSiPM0);
+	logicUnit->AddPlacedVolume(logicSiPMArray, TrPosSArSiPM1);
+	logicUnit->AddPlacedVolume(logicSiPMArray, TrPosSArSiPM2);
+	logicUnit->AddPlacedVolume(logicSiPMArray, TrPosSArSiPM3);
+
+	G4RotationMatrix* RotUnit = new G4RotationMatrix();
+	RotUnit->rotateX(90 * degree);
+	// Rotation of the assembly inside the world
+	for (G4int i = 0; i < 19; i++) {
+		G4ThreeVector PosUnit = G4ThreeVector(0, (-585 + 65 * i) * mm, 0);
+		G4Transform3D TrUnit = G4Transform3D(*RotUnit, PosUnit);
+		logicUnit->MakeImprint(logicStringBoxCrystal, TrUnit);
+	}
+	
+
+	//=============================================================//
+	//                            SArUnit                          //
+	//=============================================================//
+	G4LogicalVolume* logicContainerBrick = ConstructContainerBrick();
+
+	G4RotationMatrix RotSArUnit;
+	auto rotContainerBrick = new G4RotationMatrix();
+	rotContainerBrick->rotateX(-90 * degree);
+	G4ThreeVector ContainerPos0 = G4ThreeVector(0, 346.4 * mm, 0);
+	G4ThreeVector ContainerPos1 = G4ThreeVector(0, -346.4 * mm, 0);
+	G4ThreeVector ContainerPos2 = G4ThreeVector(600 * mm, 0, 0);
+	G4ThreeVector ContainerPos3 = G4ThreeVector(-600 * mm, 0, 0);
+	//auto physContainerBrick0 = new G4PVPlacement(rotContainerBrick, ContainerPos0, logicContainerBrick, "SArContainerUnit", logicEnv, false, 0, checkOverlaps);
+	//auto physContainerBrick1 = new G4PVPlacement(rotContainerBrick, ContainerPos1, logicContainerBrick, "SArContainerUnit", logicEnv, false, 0, checkOverlaps);
+	//auto physContainerBrick2 = new G4PVPlacement(rotContainerBrick, ContainerPos2, logicContainerBrick, "SArContainerUnit", logicEnv, false, 0, checkOverlaps);
+	//auto physContainerBrick3 = new G4PVPlacement(rotContainerBrick, ContainerPos3, logicContainerBrick, "SArContainerUnit", logicEnv, false, 0, checkOverlaps);
+
+	G4ThreeVector SArUnitSiPMPosUp0 = G4ThreeVector(0, 648 * mm, 0);
+	G4ThreeVector SArUnitSiPMPosUp1 = G4ThreeVector(200 * mm, 648 * mm, 0);
+	G4ThreeVector SArUnitSiPMPosUp2 = G4ThreeVector(-200 * mm, 648 * mm, 0);
+	G4ThreeVector SArUnitSiPMPosUp3 = G4ThreeVector(100 * mm, 648 * mm, 173.2 * mm);
+	G4ThreeVector SArUnitSiPMPosUp4 = G4ThreeVector(100 * mm, 648 * mm, -173.2 * mm);
+	G4ThreeVector SArUnitSiPMPosUp5 = G4ThreeVector(-100 * mm, 648 * mm, 173.2 * mm);
+	G4ThreeVector SArUnitSiPMPosUp6 = G4ThreeVector(-100 * mm, 648 * mm, -173.2 * mm);
+
+	G4ThreeVector SArUnitSiPMPosDown0 = G4ThreeVector(0, -648 * mm, 0);
+	G4ThreeVector SArUnitSiPMPosDown1 = G4ThreeVector(200 * mm, -648 * mm, 0);
+	G4ThreeVector SArUnitSiPMPosDown2 = G4ThreeVector(-200 * mm, -648 * mm, 0);
+	G4ThreeVector SArUnitSiPMPosDown3 = G4ThreeVector(100 * mm, -648 * mm, 173.2 * mm);
+	G4ThreeVector SArUnitSiPMPosDown4 = G4ThreeVector(100 * mm, -648 * mm, -173.2 * mm);
+	G4ThreeVector SArUnitSiPMPosDown5 = G4ThreeVector(-100 * mm, -648 * mm, 173.2 * mm);
+	G4ThreeVector SArUnitSiPMPosDown6 = G4ThreeVector(-100 * mm, -648 * mm, -173.2 * mm);
+
+	auto RotContainerSiPM = new G4RotationMatrix();
+	RotContainerSiPM->rotateX(-90 * degree);
+
+	G4LogicalVolume* logicContainerSiPMArray = ConstructContainerSiPMArray();
+	auto physContainerSiPMArrayUp0 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosUp0, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayUp1 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosUp1, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayUp2 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosUp2, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayUp3 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosUp3, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayUp4 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosUp4, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayUp5 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosUp5, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayUp6 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosUp6, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+
+	auto physContainerSiPMArrayDown0 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosDown0, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayDown1 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosDown1, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayDown2 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosDown2, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayDown3 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosDown3, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayDown4 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosDown4, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayDown5 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosDown5, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+	auto physContainerSiPMArrayDown6 = new G4PVPlacement(RotContainerSiPM, SArUnitSiPMPosDown6, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, CheckOverlaps);
+
+
+	//========================PEN shell and wire paremeters========================//
+
+	G4String WireType = fWireType;
+	G4double wireradius = 0.7 * mm;
+	G4double LN2Gap = 0.5 * mm;
+	G4double ShellThickness = 0.5 * cm;
+	G4double WireLength = 65 * mm;
+	G4double outerGeRadius = 40 * mm;
+
+	//=============================================================================//
+
+	//=============================================================//
+	//                             Wire                            //
+	//=============================================================//
+
+	fWireLength = WireLength;
+	G4double WireCentDist;
+	G4ThreeVector WirePlacement;
+
+	if (WireType == "A1") {
+		G4LogicalVolume* logicWire = ConstructA1(WireLength);
+		fWireCentDist = outerGeRadius + LN2Gap + ShellThickness + fWireRadius;
+		WirePlacement = G4ThreeVector(fWireCentDist, 0, 0);
+		fWirePos = WirePlacement;
+		//physWire = new G4PVPlacement(0, WirePlacement, logicWire, "Wire", logicStringBoxCrystal, false, 0, checkOverlaps);
+	}
+	else if (WireType == "A2") {
+		G4LogicalVolume* logicWire = ConstructA2(WireLength);
+		fWireCentDist = outerGeRadius + LN2Gap + ShellThickness + fWireRadius;
+		WirePlacement = G4ThreeVector(fWireCentDist, 0, 0);
+		fWirePos = WirePlacement;
+		//physWire = new G4PVPlacement(0, WirePlacement, logicWire, "Wire", logicStringBoxCrystal, false, 0, checkOverlaps);
+	}
+	else {
+		G4cout << "Type does not exist!" << G4endl;
+	}
+
+	//=============================================================//
+	//                        Optical Surfaces                     //
+	//=============================================================//
+
+	G4OpticalSurface* Ge_SAr = new G4OpticalSurface("Ge_SAr");
+	Ge_SAr->SetType(dielectric_metal);
+	Ge_SAr->SetModel(glisur);
+	Ge_SAr->SetFinish(polished);
+
+	G4OpticalSurface* scintWrap = new G4OpticalSurface("ScintWrap");
+	scintWrap->SetModel(unified);
+	scintWrap->SetType(dielectric_dielectric);
+	scintWrap->SetFinish(polished);
+	G4double energyReflector[] = { 2.0 * eV, 3.0 * eV, 4.0 * eV, 5.0 * eV, 6.0 * eV, 7.0 * eV };
+	const G4int num = sizeof(energyReflector) / sizeof(G4double);
+	G4double reflectivity[] = { 0.97, 0.97, 0.97, 0.97, 0.97, 0.97 };
+	assert(sizeof(reflectivity) == sizeof(energyReflector));
+	G4MaterialPropertiesTable* scintWrapProperty = matVikuiti->GetMaterialPropertiesTable();
+	scintWrapProperty->AddProperty("REFLECTIVITY", energyReflector, reflectivity, num);
+	scintWrap->SetMaterialPropertiesTable(scintWrapProperty);
+
+	G4OpticalSurface* PEN_SAr_Ref = new G4OpticalSurface("PEN_SAr_Ref");
+	if (fReflectorType == "polishedvm2000air") {
+		PEN_SAr_Ref->SetType(dielectric_LUT);
+		PEN_SAr_Ref->SetModel(LUT);
+		PEN_SAr_Ref->SetFinish(polishedvm2000air);
+	}
+	else if (fReflectorType == "polishedvm2000glue") {
+		PEN_SAr_Ref->SetType(dielectric_LUT);
+		PEN_SAr_Ref->SetModel(LUT);
+		PEN_SAr_Ref->SetFinish(polishedvm2000glue);
+	}
+	else if (fReflectorType == "polishedtyvekair") {
+		PEN_SAr_Ref->SetType(dielectric_LUT);
+		PEN_SAr_Ref->SetModel(LUT);
+		PEN_SAr_Ref->SetFinish(polishedtyvekair);
+	}
+	else if (fReflectorType == "polishedlumirrorair") {
+		PEN_SAr_Ref->SetType(dielectric_LUT);
+		PEN_SAr_Ref->SetModel(LUT);
+		PEN_SAr_Ref->SetFinish(polishedlumirrorair);
+	}
+	else if (fReflectorType == "PolishedESR_LUT") {
+		PEN_SAr_Ref->SetType(dielectric_LUTDAVIS);
+		PEN_SAr_Ref->SetModel(DAVIS);
+		PEN_SAr_Ref->SetFinish(PolishedESR_LUT);
+	}
+	else if (fReflectorType == "PolishedESRGrease_LUT") {
+		PEN_SAr_Ref->SetType(dielectric_LUTDAVIS);
+		PEN_SAr_Ref->SetModel(DAVIS);
+		PEN_SAr_Ref->SetFinish(PolishedESRGrease_LUT);
+	}
+	else if (fReflectorType == "PolishedTeflon_LUT") {
+		PEN_SAr_Ref->SetType(dielectric_LUTDAVIS);
+		PEN_SAr_Ref->SetModel(DAVIS);
+		PEN_SAr_Ref->SetFinish(PolishedTeflon_LUT);
+	}
+	else if (fReflectorType == "RoughESR_LUT") {
+		PEN_SAr_Ref->SetType(dielectric_LUTDAVIS);
+		PEN_SAr_Ref->SetModel(DAVIS);
+		PEN_SAr_Ref->SetFinish(RoughESR_LUT);
+	}
+	else {
+		PEN_SAr_Ref->SetType(dielectric_LUTDAVIS);
+		PEN_SAr_Ref->SetModel(DAVIS);
+		PEN_SAr_Ref->SetFinish(Polished_LUT);
+	}
+
+	G4OpticalSurface* PEN_LN2_Ref = new G4OpticalSurface("PEN_LN2_Ref");
+	if (fReflectorType == "polishedvm2000air") {
+		PEN_LN2_Ref->SetType(dielectric_LUT);
+		PEN_LN2_Ref->SetModel(LUT);
+		PEN_LN2_Ref->SetFinish(polishedvm2000air);
+	}
+	else if (fReflectorType == "polishedvm2000glue") {
+		PEN_LN2_Ref->SetType(dielectric_LUT);
+		PEN_LN2_Ref->SetModel(LUT);
+		PEN_LN2_Ref->SetFinish(polishedvm2000glue);
+	}
+	else if (fReflectorType == "polishedtyvekair") {
+		PEN_LN2_Ref->SetType(dielectric_LUT);
+		PEN_LN2_Ref->SetModel(LUT);
+		PEN_LN2_Ref->SetFinish(polishedtyvekair);
+	}
+	else if (fReflectorType == "polishedlumirrorair") {
+		PEN_LN2_Ref->SetType(dielectric_LUT);
+		PEN_LN2_Ref->SetModel(LUT);
+		PEN_LN2_Ref->SetFinish(polishedlumirrorair);
+	}
+	else if (fReflectorType == "PolishedESR_LUT") {
+		PEN_LN2_Ref->SetType(dielectric_LUTDAVIS);
+		PEN_LN2_Ref->SetModel(DAVIS);
+		PEN_LN2_Ref->SetFinish(PolishedESR_LUT);
+	}
+	else if (fReflectorType == "PolishedESRGrease_LUT") {
+		PEN_LN2_Ref->SetType(dielectric_LUTDAVIS);
+		PEN_LN2_Ref->SetModel(DAVIS);
+		PEN_LN2_Ref->SetFinish(PolishedESRGrease_LUT);
+	}
+	else if (fReflectorType == "PolishedTeflon_LUT") {
+		PEN_LN2_Ref->SetType(dielectric_LUTDAVIS);
+		PEN_LN2_Ref->SetModel(DAVIS);
+		PEN_LN2_Ref->SetFinish(PolishedTeflon_LUT);
+	}
+	else if (fReflectorType == "RoughESR_LUT") {
+		PEN_LN2_Ref->SetType(dielectric_LUTDAVIS);
+		PEN_LN2_Ref->SetModel(DAVIS);
+		PEN_LN2_Ref->SetFinish(RoughESR_LUT);
+	}
+	else {
+		PEN_LN2_Ref->SetType(dielectric_LUTDAVIS);
+		PEN_LN2_Ref->SetModel(DAVIS);
+		PEN_LN2_Ref->SetFinish(Polished_LUT);
+	}
+
+	G4OpticalSurface* PEN_LN2_Ref1 = new G4OpticalSurface("PEN_LN2_Ref1");
+	PEN_LN2_Ref1->SetType(dielectric_LUTDAVIS);
+	PEN_LN2_Ref1->SetModel(DAVIS);
+	PEN_LN2_Ref1->SetFinish(PolishedESR_LUT);
+
+	G4OpticalSurface* PEN_LN2 = new G4OpticalSurface("PEN_LN2");
+	PEN_LN2->SetType(dielectric_LUTDAVIS);
+	PEN_LN2->SetModel(LUT);
+	PEN_LN2->SetFinish(Polished_LUT);
+
+	G4OpticalSurface* PEN_SAr_Ref1 = new G4OpticalSurface("PEN_SAr_Ref1");
+	PEN_SAr_Ref1->SetType(dielectric_LUTDAVIS);
+	PEN_SAr_Ref1->SetModel(DAVIS);
+	PEN_SAr_Ref1->SetFinish(PolishedESR_LUT);
+
+	G4OpticalSurface* PEN_SAr = new G4OpticalSurface("PEN_SAr");
+	PEN_SAr->SetType(dielectric_LUTDAVIS);
+	PEN_SAr->SetModel(LUT);
+	PEN_SAr->SetFinish(Polished_LUT);
+
+	G4OpticalSurface* Wire_SAr = new G4OpticalSurface("Wire_SAr");
+	Wire_SAr->SetType(dielectric_dielectric);
+	Wire_SAr->SetModel(DAVIS);
+	Wire_SAr->SetFinish(Polished_LUT);
+
+	G4OpticalSurface* Ge_LN2 = new G4OpticalSurface("Ge_LN2");
+	Ge_LN2->SetType(dielectric_metal);
+	Ge_LN2->SetModel(glisur);
+	Ge_LN2->SetFinish(polished);
+	G4OpticalSurface* Ge_PEN = new G4OpticalSurface("Ge_PEN");
+	Ge_PEN->SetType(dielectric_metal);
+	Ge_PEN->SetModel(glisur);
+	Ge_PEN->SetFinish(polished);
+
+	G4LogicalBorderSurface* Ge_PEN_LBS = new G4LogicalBorderSurface("Ge_PEN_LBS", physInnerShell, physDet, Ge_PEN);
+	G4LogicalBorderSurface* Ge_SAr_LBS = new G4LogicalBorderSurface("Ge_SAr_LBS", physStringBoxCrystal, physDet, Ge_SAr);
+	G4LogicalBorderSurface* Wire_SAr_LBS = new G4LogicalBorderSurface("Wire_SAr_LBS", physStringBoxCrystal, physWire, Wire_SAr);
+	G4LogicalBorderSurface* Box_SAr_LBS = new G4LogicalBorderSurface("Box_SAr_LBS", physStringBoxCrystal, physStringBoxBrick, PEN_SAr_Ref);
+	G4LogicalBorderSurface* Box_LN2_LBS = new G4LogicalBorderSurface("Box_LN2_LBS", physStringBoxBrick, physEnv, PEN_LN2_Ref);
+	G4LogicalBorderSurface* InnerShell_SAr_LBS = new G4LogicalBorderSurface("InnerShell_SAr_LBS", physStringBoxCrystal, physInnerShell,  PEN_SAr_Ref);
+	G4LogicalBorderSurface* OuterShell_SAr_LBS = new G4LogicalBorderSurface("OuterShell_SAr_LBS", physStringBoxCrystal, physOuterShell, PEN_SAr_Ref);
 
 
 	return physWorld;
+
+	/*
+	G4OpticalSurface* SiPM_LN2 = new G4OpticalSurface("SiPM_LN2");
+	SiPM_LN2->SetType(dielectric_LUTDAVIS);
+	SiPM_LN2->SetModel(DAVIS);
+	SiPM_LN2->SetFinish(Detector_LUT);
+
+	G4OpticalSurface* SiPM_SAr = new G4OpticalSurface("SiPM_SAr");
+	SiPM_LN2->SetType(dielectric_LUTDAVIS);
+	SiPM_LN2->SetModel(DAVIS);
+	SiPM_LN2->SetFinish(Detector_LUT);
+
+	const G4int NUMENTRIES_CHIP = 11;
+	const double hc = 6.62606876 * 2.99792458 * 100. / 1.602176462;
+	G4double sipm_pp[NUMENTRIES_CHIP] = { hc / 600. * eV, hc / 590. * eV, hc / 580. * eV, hc / 570. * eV, hc / 560. * eV, hc / 550. * eV, hc / 540. * eV, hc / 530. * eV, hc / 520. * eV,hc / 510. * eV,hc / 500. * eV };
+	G4double sipm_sl[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_ss[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_bs[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	G4double sipm_rindex[NUMENTRIES_CHIP] = { 1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406 };
+	G4double sipm_reflectivity[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
+	// G4double sipm_efficiency[NUMENTRIES_CHIP] = {0.20,0.21,0.23,0.25,0.26,0.28,0.30,0.32,0.34,0.36,0.38};
+	G4double sipm_efficiency[NUMENTRIES_CHIP] = { 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0 };
+
+	G4MaterialPropertiesTable* SIPM_MPT_Surf = new G4MaterialPropertiesTable();
+	// SIPM_MPT_Surf->AddProperty("SPECULARLOBECONSTANT",sipm_pp,sipm_sl,NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("SPECULARSPIKECONSTANT",sipm_pp,sipm_ss,NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("BACKSCATTERCONSTANT",sipm_pp,sipm_bs,NUMENTRIES_CHIP);
+	SIPM_MPT_Surf->AddProperty("REFLECTIVITY", sipm_pp, sipm_reflectivity, NUMENTRIES_CHIP);
+	SIPM_MPT_Surf->AddProperty("EFFICIENCY", sipm_pp, sipm_efficiency, NUMENTRIES_CHIP);
+	// SIPM_MPT_Surf->AddProperty("RINDEX",sipm_pp,sipm_rindex,NUMENTRIES_CHIP);
+
+	SiPM_SAr->SetMaterialPropertiesTable(SIPM_MPT_Surf);
+	SiPM_LN2->SetMaterialPropertiesTable(SIPM_MPT_Surf);
+
+	G4LogicalBorderSurface* SiPM_SAr_LBS_0 = new G4LogicalBorderSurface("SiPM_SAr_LBS_0", physStringBoxCrystal, physSiPM0, SiPM_SAr);
+	G4LogicalBorderSurface* SiPM_SAr_LBS_1 = new G4LogicalBorderSurface("SiPM_SAr_LBS_1", physStringBoxCrystal, physSiPM1, SiPM_SAr);
+	G4LogicalBorderSurface* SiPM_SAr_LBS_2 = new G4LogicalBorderSurface("SiPM_SAr_LBS_2", physStringBoxCrystal, physSiPM2, SiPM_SAr);
+	G4LogicalBorderSurface* SiPM_SAr_LBS_3 = new G4LogicalBorderSurface("SiPM_SAr_LBS_3", physStringBoxCrystal, physSiPM3, SiPM_SAr);
+	G4LogicalBorderSurface* SiPM_SAr_LBS_4 = new G4LogicalBorderSurface("SiPM_SAr_LBS_4", physStringBoxCrystal, physSiPM4, SiPM_SAr);
+	G4LogicalBorderSurface* SiPM_SAr_LBS_5 = new G4LogicalBorderSurface("SiPM_SAr_LBS_5", physStringBoxCrystal, physSiPM5, SiPM_SAr);
+	
+	// G4LogicalBorderSurface* SiPM_SAr_LBS_P = new G4LogicalBorderSurface("SiPM_SAr_LBS_P", physEnv, physSiPMP, SiPM_SAr_P);
+	*/
 }
 
 G4VPhysicalVolume* PENDetectorConstruction::ConstructSArUnit() {
@@ -1477,233 +2048,3 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructSArUnit() {
 
 	return physWorld;
 }
-
-G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
-	G4NistManager* nist = G4NistManager::Instance();
-	G4bool checkOverlaps = true;
-
-	//=============================================================//
-	//                        World&Envelope                       //
-	//=============================================================//
-
-	G4Material* world_mat = fVacuum;
-	G4Material* env_mat = matLN2;
-	G4Material* det_mat = matEnGe;
-
-	G4double world_size = 200 * cm;
-	G4double env_size = 180 * cm;
-	G4Box* solidWorld = new G4Box("solidWorld", 0.5 * world_size, 0.5 * world_size, 0.5 * world_size);
-	G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, world_mat, "logicWorld");
-	G4VPhysicalVolume* physWorld =
-		new G4PVPlacement(0,                     //no rotation
-			G4ThreeVector(),       //at (0,0,0)
-			logicWorld,            //its logical volume
-			"World",               //its name
-			0,                     //its mother  volume
-			false,                 //no boolean operation
-			0,                     //copy number
-			checkOverlaps);        //overlaps checking
-
-	G4Box* solidEnv = new G4Box("solidEnvelope", 0.5 * env_size, 0.5 * env_size, 0.5 * env_size);
-	G4LogicalVolume* logicEnv = new G4LogicalVolume(solidEnv, env_mat, "logicEnvelope");
-	physEnv = new G4PVPlacement(0, G4ThreeVector(), logicEnv, "Envelope", logicWorld, false, 0, checkOverlaps);
-
-	/////////////////////////////////////////////////////////////////
-
-	//=============================================================//
-	//                          StringBox                          //
-	//=============================================================//
-
-	auto logicStringBoxBrick = ConstructStringBoxBrick();
-	physStringBoxBrick = new G4PVPlacement(0, G4ThreeVector(), logicStringBoxBrick, "StringBox", logicEnv, false, 0, checkOverlaps);
-
-	G4OpticalSurface* Box_SAr = new G4OpticalSurface("Box_SAr");
-	G4LogicalBorderSurface* Box_SAr_LBS = new G4LogicalBorderSurface("Box_SAr_LBS", physStringBoxCrystal, physContainerBrick, Box_SAr);
-	Box_SAr = dynamic_cast <G4OpticalSurface*>(Box_SAr_LBS->GetSurface(physStringBoxCrystal, physContainerBrick)->GetSurfaceProperty());
-	Box_SAr->SetType(dielectric_LUTDAVIS);
-	Box_SAr->SetModel(DAVIS);
-	Box_SAr->SetFinish(Polished_LUT);
-
-
-	G4OpticalSurface* Box_LN2 = new G4OpticalSurface("Box_LN2");
-	G4LogicalBorderSurface* Box_LN2_LBS = new G4LogicalBorderSurface("Box_LN2_LBS", physStringBoxCrystal, physContainerBrick, Box_LN2);
-	Box_LN2 = dynamic_cast <G4OpticalSurface*>(Box_LN2_LBS->GetSurface(physEnv, physContainerBrick)->GetSurfaceProperty());
-	Box_LN2->SetType(dielectric_LUTDAVIS);
-	Box_LN2->SetModel(DAVIS);
-	Box_LN2->SetFinish(Polished_LUT);
-
-	/////////////////////////////////////////////////////////////////
-
-	//=============================================================//
-	//                             BEGe                            //
-	//=============================================================//
-
-	G4LogicalVolume* logicTotalCrystal = ConstructBEGe();
-	auto physDet = new G4PVPlacement(0, G4ThreeVector(0, 0, -1 * mm), logicTotalCrystal, "PhysDet", logicStringBoxCrystal, false, 0, checkOverlaps);
-
-	G4OpticalSurface* Ge_SAr = new G4OpticalSurface("Ge_SAr");
-	G4LogicalBorderSurface* Ge_SAr_LBS = new G4LogicalBorderSurface("Ge_SAr_LBS", physStringBoxCrystal, physDet, Ge_SAr);
-	Ge_SAr = dynamic_cast <G4OpticalSurface*>(Ge_SAr_LBS->GetSurface(physStringBoxCrystal, physDet)->GetSurfaceProperty());
-	Ge_SAr->SetType(dielectric_metal);
-	Ge_SAr->SetModel(glisur);
-	Ge_SAr->SetFinish(polished);
-
-	/////////////////////////////////////////////////////////////////
-
-	//========================PEN shell and wire paremeters========================//
-
-	G4String WireType = fWireType;
-	G4double wireradius = 0.7 * mm;
-	G4double LN2Gap = 0.5 * mm;
-	G4double ShellThickness = 1 * cm;
-	G4double WireLength = 71 * mm;
-	G4double outerGeRadius = 40 * mm;
-
-	//=============================================================================//
-
-
-	//=============================================================//
-	//                             Wire                            //
-	//=============================================================//
-
-	fWireLength = WireLength;
-	G4double WireCentDist;
-	G4ThreeVector WirePlacement;
-
-	if (WireType == "A1") {
-		G4LogicalVolume* logicWire = ConstructA1(WireLength);
-		fWireCentDist = outerGeRadius + LN2Gap + ShellThickness + fWireRadius;
-		WirePlacement = G4ThreeVector(fWireCentDist, 0, 0);
-		fWirePos = WirePlacement;
-		//physWire = new G4PVPlacement(0, WirePlacement, logicWire, "Wire", logicStringBoxCrystal, false, 0, checkOverlaps);
-	}
-	else if (WireType == "A2") {
-		G4LogicalVolume* logicWire = ConstructA2(WireLength);
-		fWireCentDist = outerGeRadius + LN2Gap + ShellThickness + fWireRadius;
-		WirePlacement = G4ThreeVector(fWireCentDist, 0, 0);
-		fWirePos = WirePlacement;
-		//physWire = new G4PVPlacement(0, WirePlacement, logicWire, "Wire", logicStringBoxCrystal, false, 0, checkOverlaps);
-	}
-	else {
-		G4cout << "Type does not exist!" << G4endl;
-	}
-
-	G4OpticalSurface* Wire_SAr = new G4OpticalSurface("Wire_SAr");
-	G4LogicalBorderSurface* Wire_LN2_LBS = new G4LogicalBorderSurface("Wire_SAr_LBS", physContainerCrystal, physWire, Wire_SAr);
-	Wire_SAr = dynamic_cast <G4OpticalSurface*>(Wire_LN2_LBS->GetSurface(physContainerCrystal, physWire)->GetSurfaceProperty());
-	Wire_SAr->SetType(dielectric_dielectric);
-	Wire_SAr->SetModel(DAVIS);
-	Wire_SAr->SetFinish(Polished_LUT);
-
-	/////////////////////////////////////////////////////////////////
-
-	//=============================================================//
-	//                           PENShell                          //
-	//=============================================================//
-
-	auto rotPENShell = new G4RotationMatrix();
-	rotPENShell->rotateX(90 * degree);
-	//G4ThreeVector PENShellPlacement =G4ThreeVector(0, 0, 34.1 * mm);
-	G4ThreeVector PENShellPlacement = G4ThreeVector(0, 0, 0);
-	G4LogicalVolume* logicPENShell = ConstructPENShell();
-	physPENShell = new G4PVPlacement(rotPENShell, PENShellPlacement, logicPENShell, "PENShell", logicStringBoxCrystal, false, 0, checkOverlaps);
-
-	G4OpticalSurface* PEN_SAr = new G4OpticalSurface("PEN_SAr");
-	G4LogicalBorderSurface* PEN_SAr_LBS = new G4LogicalBorderSurface("PEN_SAr_LBS", physStringBoxCrystal, physPENShell, PEN_SAr);
-	PEN_SAr = dynamic_cast <G4OpticalSurface*>(PEN_SAr_LBS->GetSurface(physStringBoxCrystal, physPENShell)->GetSurfaceProperty());
-	PEN_SAr->SetType(dielectric_LUTDAVIS);
-	PEN_SAr->SetModel(DAVIS);
-	PEN_SAr->SetFinish(Polished_LUT);
-
-	/////////////////////////////////////////////////////////////////
-
-	//=============================================================//
-	//                            SiPMs                            //
-	//=============================================================//
-
-	G4LogicalVolume* logicSiPMArray = ConstructSiPMArray();
-
-	auto rotSiPM0 = new G4RotationMatrix();
-	rotSiPM0->rotateY(90 * degree);
-
-	physSiPMArray0 = new G4PVPlacement(rotSiPM0, G4ThreeVector(-166 * mm, 0, 0 * mm), logicSiPMArray, "SiPMArray0", logicStringBoxCrystal, false, 0, checkOverlaps);
-	physSiPMArray1 = new G4PVPlacement(rotSiPM0, G4ThreeVector(166 * mm, 0, 0 * mm), logicSiPMArray, "SiPMArray1", logicStringBoxCrystal, false, 1, checkOverlaps);
-
-	G4OpticalSurface* SiPM_SAr_0 = new G4OpticalSurface("SiPM_SAr_0");
-	G4OpticalSurface* SiPM_SAr_1 = new G4OpticalSurface("SiPM_SAr_1");
-	G4OpticalSurface* SiPM_SAr_2 = new G4OpticalSurface("SiPM_SAr_2");
-	G4OpticalSurface* SiPM_SAr_3 = new G4OpticalSurface("SiPM_SAr_3");
-	G4OpticalSurface* SiPM_SAr_4 = new G4OpticalSurface("SiPM_SAr_4");
-	G4OpticalSurface* SiPM_SAr_5 = new G4OpticalSurface("SiPM_SAr_5");
-
-	G4LogicalBorderSurface* SiPM_SAr_LBS_0 = new G4LogicalBorderSurface("SiPM_SAr_LBS_0", physStringBoxCrystal, physSiPM0, SiPM_SAr_0);
-	G4LogicalBorderSurface* SiPM_SAr_LBS_1 = new G4LogicalBorderSurface("SiPM_SAr_LBS_1", physStringBoxCrystal, physSiPM1, SiPM_SAr_1);
-	G4LogicalBorderSurface* SiPM_SAr_LBS_2 = new G4LogicalBorderSurface("SiPM_SAr_LBS_2", physStringBoxCrystal, physSiPM2, SiPM_SAr_2);
-	G4LogicalBorderSurface* SiPM_SAr_LBS_3 = new G4LogicalBorderSurface("SiPM_SAr_LBS_3", physStringBoxCrystal, physSiPM3, SiPM_SAr_3);
-	G4LogicalBorderSurface* SiPM_SAr_LBS_4 = new G4LogicalBorderSurface("SiPM_SAr_LBS_4", physStringBoxCrystal, physSiPM4, SiPM_SAr_4);
-	G4LogicalBorderSurface* SiPM_SAr_LBS_5 = new G4LogicalBorderSurface("SiPM_SAr_LBS_5", physStringBoxCrystal, physSiPM5, SiPM_SAr_5);
-	// G4LogicalBorderSurface* SiPM_SAr_LBS_P = new G4LogicalBorderSurface("SiPM_SAr_LBS_P", physEnv, physSiPMP, SiPM_SAr_P);
-
-	SiPM_SAr_0 = dynamic_cast <G4OpticalSurface*>(SiPM_SAr_LBS_0->GetSurface(physStringBoxCrystal, physSiPM0)->GetSurfaceProperty());
-	SiPM_SAr_1 = dynamic_cast <G4OpticalSurface*>(SiPM_SAr_LBS_1->GetSurface(physStringBoxCrystal, physSiPM1)->GetSurfaceProperty());
-	SiPM_SAr_2 = dynamic_cast <G4OpticalSurface*>(SiPM_SAr_LBS_2->GetSurface(physStringBoxCrystal, physSiPM2)->GetSurfaceProperty());
-	SiPM_SAr_3 = dynamic_cast <G4OpticalSurface*>(SiPM_SAr_LBS_3->GetSurface(physStringBoxCrystal, physSiPM3)->GetSurfaceProperty());
-	SiPM_SAr_4 = dynamic_cast <G4OpticalSurface*>(SiPM_SAr_LBS_4->GetSurface(physStringBoxCrystal, physSiPM4)->GetSurfaceProperty());
-	SiPM_SAr_5 = dynamic_cast <G4OpticalSurface*>(SiPM_SAr_LBS_5->GetSurface(physStringBoxCrystal, physSiPM5)->GetSurfaceProperty());
-	// SiPM_SAr_P = dynamic_cast <G4OpticalSurface*>(SiPM_SAr_LBS_P->GetSurface(physEnv, physSiPMP)->GetSurfaceProperty());
-
-	SiPM_SAr_0->SetType(dielectric_LUTDAVIS);
-	SiPM_SAr_1->SetType(dielectric_LUTDAVIS);
-	SiPM_SAr_2->SetType(dielectric_LUTDAVIS);
-	SiPM_SAr_3->SetType(dielectric_LUTDAVIS);
-	SiPM_SAr_4->SetType(dielectric_LUTDAVIS);
-	SiPM_SAr_5->SetType(dielectric_LUTDAVIS);
-	// SiPM_SAr_P->SetType(dielectric_dielectric);
-
-	SiPM_SAr_0->SetModel(DAVIS);
-	SiPM_SAr_1->SetModel(DAVIS);
-	SiPM_SAr_2->SetModel(DAVIS);
-	SiPM_SAr_3->SetModel(DAVIS);
-	SiPM_SAr_4->SetModel(DAVIS);
-	SiPM_SAr_5->SetModel(DAVIS);
-	//SiPM_SAr_P->SetModel(DAVIS);
-
-	SiPM_SAr_0->SetFinish(Detector_LUT);
-	SiPM_SAr_1->SetFinish(Detector_LUT);
-	SiPM_SAr_2->SetFinish(Detector_LUT);
-	SiPM_SAr_3->SetFinish(Detector_LUT);
-	SiPM_SAr_4->SetFinish(Detector_LUT);
-	SiPM_SAr_5->SetFinish(Detector_LUT);
-	//SiPM_SAr_P->SetFinish(Detector_LUT);
-
-	const G4int NUMENTRIES_CHIP = 11;
-	const double hc = 6.62606876 * 2.99792458 * 100. / 1.602176462;
-	G4double sipm_pp[NUMENTRIES_CHIP] = { hc / 600. * eV, hc / 590. * eV, hc / 580. * eV, hc / 570. * eV, hc / 560. * eV, hc / 550. * eV, hc / 540. * eV, hc / 530. * eV, hc / 520. * eV,hc / 510. * eV,hc / 500. * eV };
-	G4double sipm_sl[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
-	G4double sipm_ss[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
-	G4double sipm_bs[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
-	G4double sipm_rindex[NUMENTRIES_CHIP] = { 1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406 };
-	G4double sipm_reflectivity[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
-	// G4double sipm_efficiency[NUMENTRIES_CHIP] = {0.20,0.21,0.23,0.25,0.26,0.28,0.30,0.32,0.34,0.36,0.38};
-	G4double sipm_efficiency[NUMENTRIES_CHIP] = { 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0 };
-
-	G4MaterialPropertiesTable* SIPM_MPT_Surf = new G4MaterialPropertiesTable();
-	// SIPM_MPT_Surf->AddProperty("SPECULARLOBECONSTANT",sipm_pp,sipm_sl,NUMENTRIES_CHIP);
-	// SIPM_MPT_Surf->AddProperty("SPECULARSPIKECONSTANT",sipm_pp,sipm_ss,NUMENTRIES_CHIP);
-	// SIPM_MPT_Surf->AddProperty("BACKSCATTERCONSTANT",sipm_pp,sipm_bs,NUMENTRIES_CHIP);
-	SIPM_MPT_Surf->AddProperty("REFLECTIVITY", sipm_pp, sipm_reflectivity, NUMENTRIES_CHIP);
-	SIPM_MPT_Surf->AddProperty("EFFICIENCY", sipm_pp, sipm_efficiency, NUMENTRIES_CHIP);
-	// SIPM_MPT_Surf->AddProperty("RINDEX",sipm_pp,sipm_rindex,NUMENTRIES_CHIP);
-
-	SiPM_SAr_0->SetMaterialPropertiesTable(SIPM_MPT_Surf);
-	SiPM_SAr_1->SetMaterialPropertiesTable(SIPM_MPT_Surf);
-	SiPM_SAr_2->SetMaterialPropertiesTable(SIPM_MPT_Surf);
-	SiPM_SAr_3->SetMaterialPropertiesTable(SIPM_MPT_Surf);
-	SiPM_SAr_4->SetMaterialPropertiesTable(SIPM_MPT_Surf);
-	SiPM_SAr_5->SetMaterialPropertiesTable(SIPM_MPT_Surf);
-	/////////////////////////////////////////////////////////////////
-
-	return physWorld;
-}
-
-

@@ -9,7 +9,7 @@
 #include "G4UIcmdWithAnInteger.hh"
 #include "G4UIcmdWithABool.hh"
 #include "G4SystemOfUnits.hh"
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo.....
 
 class PENPrimaryGeneratorAction;
 class G4UIdirectory;

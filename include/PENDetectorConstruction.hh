@@ -30,6 +30,7 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         const G4VPhysicalVolume* GetPENShell() const;
 		const G4VPhysicalVolume* GetBulk() const;
         const G4VPhysicalVolume* GetSiPM(G4int i) const;
+        const G4VPhysicalVolume* GetContainerSiPM(G4int i) const;
         const G4VPhysicalVolume* GetEnv() const;
 
         G4VPhysicalVolume* Construct();
@@ -52,7 +53,8 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4LogicalVolume* ConstructInnerReflector();//Inner Reflector of OuterShell
         G4LogicalVolume* ConstructReflector();
         G4LogicalVolume* ConstructSiPMArray();
-        G4LogicalVolume* ConstructSArSiPM();
+        G4LogicalVolume* ConstructContainerSiPMArray();
+        G4LogicalVolume* ConstructSArSiPMArray();
 
         void DefineMat();
 
@@ -138,6 +140,11 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4VPhysicalVolume* physSiPM8;
         G4VPhysicalVolume* physSiPM9;
 
+        G4VPhysicalVolume* physContainerSiPM0;
+        G4VPhysicalVolume* physContainerSiPM1;
+        G4VPhysicalVolume* physContainerSiPM2;
+        G4VPhysicalVolume* physContainerSiPM3;
+
         G4VPhysicalVolume* physSiPMArray0;
         G4VPhysicalVolume* physSiPMArray1;
         G4VPhysicalVolume* physSiPMArray2;
@@ -152,6 +159,7 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4VPhysicalVolume* physContainerCrystal;//Crystal in Container
         G4VPhysicalVolume* physStringBoxCrystal;//Crystal in String Box
         G4LogicalVolume* logicStringBoxCrystal;
+        G4LogicalVolume* logicContainerCrystal;
         G4Tubs* solidSideSiPM;
 
         PENMaterials* matconstructor;
@@ -264,22 +272,27 @@ inline const G4VPhysicalVolume* PENDetectorConstruction::GetSiPM(G4int i) const
         case 4:
         return physSiPM4;
         break;
-        case 5:
-        return physSiPM5;
-        break;
-        case 6:
-        return physSiPM6;
-        break;
-        case 7:
-        return physSiPM7;
-        break;
-        case 8:
-        return physSiPM8;
-        break;
-        case 9:
-        return physSiPM9;
-        break;
         default:
+        break;
+    }
+}
+
+inline const G4VPhysicalVolume* PENDetectorConstruction::GetContainerSiPM(G4int i) const
+{
+    switch (i) {
+    case 0:
+        return physContainerSiPM0;
+        break;
+    case 1:
+        return physSiPM1;
+        break;
+    case 2:
+        return physSiPM2;
+        break;
+    case 3:
+        return physSiPM3;
+        break;
+    default:
         break;
     }
 }

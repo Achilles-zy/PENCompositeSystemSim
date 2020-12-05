@@ -186,6 +186,94 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 			G4cout << "Error: Src type not found! Using Geant4 default settings." << G4endl;
 		}
 	}
+	else if (mode == "Array-1") {
+		if (SrcType == "Wire") {
+			G4double Radius = fDetCons->GetWireRadius();
+			G4double Length = fDetCons->GetWireLength();
+			G4ThreeVector WirePos = fDetCons->GetWirePos();
+
+			//G4cout << "==========================Primary Info==========================" << G4endl;
+			//G4cout << "Wire Position: " << WirePos << G4endl;
+			//G4cout << "Wire Radius: " << Radius << G4endl;
+			//G4cout << "Wire Length: " << Length << G4endl;
+			//G4cout << "================================================================" << G4endl;
+
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(WirePos);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
+
+			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("Wire");
+		}
+		else if (SrcType == "PENShell") {
+			G4double Radius = fDetCons->GetPENShellRadius();
+			G4double Length = fDetCons->GetPENShellLength();
+
+			if (G4RunManager::GetRunManager()->GetRunManagerType() == 1) {
+				G4cout << "==========================Primary Info==========================" << G4endl;
+				G4cout << "Sample Region Radius: " << Radius << G4endl;
+				G4cout << "Sample Region Length: " << Length << G4endl;
+				G4cout << "================================================================" << G4endl;
+			}
+
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius * 2);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
+
+			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("PENShell");
+		}
+		else if (SrcType == "InnerShell") {
+			G4double Radius = fDetCons->GetPENShellRadius();
+			G4double Length = fDetCons->GetPENShellLength();
+
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius * 2);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
+
+			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("InnerShell");
+		}
+		else if (SrcType == "OuterShell") {
+			G4double Radius = fDetCons->GetPENShellRadius();
+			G4double Length = fDetCons->GetPENShellLength();
+
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius * 2);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
+
+			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("OuterShell");
+		}
+		else if (SrcType == "Point") {
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Point");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(G4ThreeVector(0, 0, 25 * mm));
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEmax(InitialE);
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEmin(InitialE);
+		}
+		else if (SrcType == "InnerShellSurface") {
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Surface");
+			fPENGPS->GetCurrentSource()->GetEneDist()->SetEnergyDisType("Mono");
+			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(51 * mm);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(51 * mm / 2);
+		}
+		else {
+			G4cout << "Error: Src type not found! Using Geant4 default settings." << G4endl;
+		}
+	}
 	else {
 		G4cout << "Error: Mode not found! Using Geant4 default settings." << G4endl;
 	}
