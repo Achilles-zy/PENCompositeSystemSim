@@ -14,6 +14,7 @@
 #include "PENMaterials.hh"
 #include "PENDetectorMessenger.hh"
 #include "PENDetectorConstruction.hh"
+#include <map>
 //#include "TMath.h"
 //#include "G4GDMLParser.hh"
 
@@ -37,6 +38,13 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4VPhysicalVolume* ConstructUnit();
         G4VPhysicalVolume* ConstructSArUnit();
         G4VPhysicalVolume* ConstructArray_1();
+        G4VPhysicalVolume* GetPhysicalVolumeByName(const G4String& name);
+        void ResetPhysicalVolumeNames();
+        void SetPVNamesForConfine_PENShell();
+        void SetPVNamesForConfine_SinglePENShell();
+        void GetPhysicalVolumeProperties();
+        std::map<G4VPhysicalVolume*, G4int> VolumeLUT;
+        std::map<G4VPhysicalVolume*, G4String> VolumeNameLUT;
 
         G4LogicalVolume* ConstructOuterShell();
         G4LogicalVolume* ConstructInnerShell();
@@ -55,6 +63,7 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4LogicalVolume* ConstructSiPMArray();
         G4LogicalVolume* ConstructContainerSiPMArray();
         G4LogicalVolume* ConstructSArSiPMArray();
+        G4LogicalVolume* ConstructASICPlate();
 
         void DefineMat();
 
@@ -122,6 +131,9 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4double GetSArBrickHeight() {
             return fSArBrickHeight;
         }
+        G4double GetASICThickness() {
+            return fASICThickness;
+        }
 
 
     private:
@@ -135,10 +147,6 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4VPhysicalVolume* physSiPM3;
         G4VPhysicalVolume* physSiPM4;
         G4VPhysicalVolume* physSiPM5;
-        G4VPhysicalVolume* physSiPM6;
-        G4VPhysicalVolume* physSiPM7;
-        G4VPhysicalVolume* physSiPM8;
-        G4VPhysicalVolume* physSiPM9;
 
         G4VPhysicalVolume* physContainerSiPM0;
         G4VPhysicalVolume* physContainerSiPM1;
@@ -158,9 +166,10 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4VPhysicalVolume* physInnerReflector;
         G4VPhysicalVolume* physContainerCrystal;//Crystal in Container
         G4VPhysicalVolume* physStringBoxCrystal;//Crystal in String Box
+        G4VPhysicalVolume* physASICPlate;
         G4LogicalVolume* logicStringBoxCrystal;
         G4LogicalVolume* logicContainerCrystal;
-        G4Tubs* solidSideSiPM;
+        G4LogicalVolume* logicASICPlate;
 
         PENMaterials* matconstructor;
 
@@ -232,6 +241,10 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4double fBEGeHeight;
         G4double fSArBrickHeight;
         G4double fSArBrickRadius;
+        G4double fASICWidth;
+        G4double fASICLength;
+        G4double fASICThickness;
+
         PENDetectorMessenger* fDetectorMessenger;
         G4bool CheckOverlaps;
         G4bool ifOuterReflector;
@@ -284,13 +297,13 @@ inline const G4VPhysicalVolume* PENDetectorConstruction::GetContainerSiPM(G4int 
         return physContainerSiPM0;
         break;
     case 1:
-        return physSiPM1;
+        return physContainerSiPM1;
         break;
     case 2:
-        return physSiPM2;
+        return physContainerSiPM2;
         break;
     case 3:
-        return physSiPM3;
+        return physContainerSiPM3;
         break;
     default:
         break;

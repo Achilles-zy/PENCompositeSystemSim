@@ -45,6 +45,7 @@ class G4OpAbsorption;
 class G4OpRayleigh;
 class G4OpMieHG;
 class G4OpBoundaryProcess;
+class G4OpWLS;
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -89,6 +90,7 @@ class PENPhysicsList : public G4VUserPhysicsList
     static G4ThreadLocal G4OpRayleigh* fRayleighScatteringProcess;
     static G4ThreadLocal G4OpMieHG* fMieHGScatteringProcess;
     static G4ThreadLocal G4OpBoundaryProcess* fBoundaryProcess;
+    static G4ThreadLocal G4OpWLS* fWLSProcess;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -34,6 +34,12 @@ PENPrimaryGeneratorMessenger::PENPrimaryGeneratorMessenger(PENPrimaryGeneratorAc
   cmdSetSrcType->SetParameterName("SrcType",true);
   cmdSetSrcType->SetDefaultValue("PENShell");
   cmdSetSrcType->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+  cmdSetImprintID = new G4UIcmdWithAnInteger("/PEN/src/imprintid", this);
+  cmdSetImprintID->SetGuidance("Choose a detector unit");
+  cmdSetImprintID->SetParameterName("ImprintID", true);
+  cmdSetImprintID->SetDefaultValue(1);
+  cmdSetImprintID->AvailableForStates(G4State_PreInit, G4State_Idle);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -41,6 +47,7 @@ PENPrimaryGeneratorMessenger::PENPrimaryGeneratorMessenger(PENPrimaryGeneratorAc
 PENPrimaryGeneratorMessenger::~PENPrimaryGeneratorMessenger()
 {
   delete cmdSetSrcType;
+  delete cmdSetImprintID;
   delete fSrcDir;
 }
 
@@ -50,6 +57,9 @@ void PENPrimaryGeneratorMessenger::SetNewValue(G4UIcommand* command, G4String ne
 {
   if(command == cmdSetSrcType) {
   	fAction->SetSrcType(newValue);
+  }
+  if (command == cmdSetImprintID) {
+      fAction->SetImprintID(cmdSetImprintID->GetNewIntValue(newValue));
   }
 }
 

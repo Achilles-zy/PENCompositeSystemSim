@@ -29,6 +29,10 @@ public:
         SrcType = type;
     }
 
+    void SetImprintID(G4int id) {
+        ImprintID = id;
+    }
+
     G4String GetSrcType() {
         return SrcType;
     }
@@ -39,7 +43,7 @@ private:
     G4String PrimaryName;
     G4String SrcType;
     G4String LEGENDSrcPos;
-
+    G4int ImprintID;
 
 
     G4GeneralParticleSource* fPENGPS;

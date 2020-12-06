@@ -118,6 +118,26 @@ void PENRunAction::BeginOfRunAction(const G4Run* aRun)
 		  txtname = "Unit_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType() + "_" + fDetCons->GetReflectorType() + fDetCons->GetWireType();
 	  }
   }
+  else if (fDetCons->GetMode() == "Array-1") {
+	  if (fPrimaryGenerator->GetSrcType() == "PENShell") {
+		  //fileName = "Unit_" + fDetCons->GetConfine() + "_" + std::to_string(RunID);
+		  fileName = "Array-1_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType() + "_" + fDetCons->GetReflectorType();
+		  filename = fileName;
+		  txtname = "Array-1_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType() + "_" + fDetCons->GetReflectorType();
+	  }
+	  else if (fPrimaryGenerator->GetSrcType() == "InnerShellSurface") {
+		  //fileName = "Unit_" + fDetCons->GetConfine() + "_" + std::to_string(RunID);
+		  fileName = "Array-1_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType() + "_" + fDetCons->GetReflectorType();
+		  filename = fileName;
+		  txtname = "Array-1_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType() + "_" + fDetCons->GetReflectorType();
+	  }
+	  else if (fPrimaryGenerator->GetSrcType() == "Wire") {
+		  //fileName = "Unit_" + fDetCons->GetConfine() + "_" + fDetCons->GetWireType() + "_" + std::to_string(RunID);
+		  fileName = "Array-1_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType() + "_" + fDetCons->GetReflectorType() + "_" + fDetCons->GetWireType();
+		  filename = fileName;
+		  txtname = "Array-1_" + std::to_string(fDetCons->GetPENPropertiesID()) + "_" + fPrimaryGenerator->GetSrcType() + "_" + fDetCons->GetReflectorType() + fDetCons->GetWireType();
+	  }
+  }
 
   //analysisManager->OpenFile(fileName);
   analysisManager->OpenFile(filename);
@@ -152,8 +172,8 @@ void PENRunAction::EndOfRunAction(const G4Run* aRun)
   if (fDetCons->GetMode() == "Unit") {
 	  CDEXOutput(aRun);
   }
-  else if (fDetCons->GetMode() == "Array") {
-	  CDEXOutput(aRun);
+  else if (fDetCons->GetMode() == "Array-1") {
+	  CDEXArrayOutput(aRun);
   }
   else if (fDetCons->GetMode() == "SArUnit") {
 	  CDEXOutput(aRun);
@@ -265,6 +285,113 @@ void PENRunAction::CDEXOutput(const G4Run* aRun) {
 			<< std::setw(40) << std::left << fPrimaryGenerator->GetPrimaryName() << '\t'
 			<< std::setw(40) << std::left << std::setiosflags(std::ios::fixed) << std::setprecision(2) << fPrimaryGenerator->GetPrimaryE() << '\t'
 			<< std::setw(40) << std::left << fDetCons->GetReflectorType() << '\t'
+			<< std::setw(40) << std::left << SiPMEventCount.GetValue() << '\t'
+			<< std::setw(40) << std::left << VetoEventCount.GetValue() << '\t'
+			<< std::setw(40) << std::left << VetoEventCount_1.GetValue() << '\t'
+			<< std::setw(40) << std::left << VetoEventCount_2.GetValue() << '\t'
+			<< std::setw(40) << std::left << VetoEventCount_3.GetValue() << '\t'
+			<< std::setw(40) << std::left << VetoEventCount_4.GetValue() << '\t'
+			<< std::setw(40) << std::left << BulkEventCount.GetValue() << '\t'
+			<< std::setw(40) << std::left << DetectableEventCount.GetValue() << '\t'
+			<< std::setw(40) << std::left << VetoPossibleEvtCount.GetValue() << '\t'
+			<< std::setw(40) << std::left << eff << '\t'
+			<< std::setw(40) << std::left << ROIEventCount.GetValue() << '\t'
+			<< std::setw(40) << std::left << ROIVetoEventCount.GetValue() << '\t'
+			<< std::setw(40) << std::left << ROIVetoPossibleEvtCount.GetValue() << '\t'
+			<< std::setw(40) << std::left << ROIeff << G4endl;
+		output.close();
+		//std::DecimalFormat df1 = new DecimalFormat("0.0");
+	}
+}
+
+void PENRunAction::CDEXArrayOutput(const G4Run* aRun) {
+	if (G4RunManager::GetRunManager()->GetRunManagerType() == 1) {
+		G4cout << "End Running ..." << G4endl;
+		G4cout << "==========================Run Summary==========================" << G4endl;
+		G4cout << G4endl;
+		G4cout << G4endl;
+		G4cout << "VetoEventCount =" << VetoEventCount.GetValue() << G4endl;
+		G4cout << "VetoEventCount_1 =" << VetoEventCount_1.GetValue() << G4endl;
+		G4cout << "VetoEventCount_2 =" << VetoEventCount_2.GetValue() << G4endl;
+		G4cout << "VetoEventCount_3 =" << VetoEventCount_3.GetValue() << G4endl;
+		G4cout << "VetoEventCount_4 =" << VetoEventCount_4.GetValue() << G4endl;
+		G4cout << "SiPMEventCount =" << SiPMEventCount.GetValue() << G4endl;
+		G4cout << "BulkEventCount =" << BulkEventCount.GetValue() << G4endl;
+		G4cout << "DetectableEventCount =" << DetectableEventCount.GetValue() << G4endl;
+		G4cout << "VetoPossibleEventCount =" << VetoPossibleEvtCount.GetValue() << G4endl;
+		G4cout << "ROIEventCount =" << ROIEventCount.GetValue() << G4endl;
+		G4cout << "ROIVetoEventCount =" << ROIVetoEventCount.GetValue() << G4endl;
+		G4cout << "ROIVetoPossibleEventCount =" << ROIVetoPossibleEvtCount.GetValue() << G4endl;
+		G4cout << G4endl;
+		G4cout << G4endl;
+		G4cout << "===============================================================" << G4endl;
+
+		std::ofstream output;
+		if (aRun->GetRunID() == 0) {
+			output.open(txtname + ".txt", std::ios::ate);
+			if (fPrimaryGenerator->GetSrcType() == "PENShell") {
+				output
+					<< "Source Distribution:\t" << "PENShell" << G4endl;
+			}
+			else if (fPrimaryGenerator->GetSrcType() == "Wire") {
+				output
+					<< "Source Distribution:\t" << "Wire" << G4endl
+					<< "Wire Type:\t" << fDetCons->GetWireType() << G4endl
+					<< "Reflector Type:\t" << fDetCons->GetReflectorType() << G4endl;
+			}
+			output
+				//<< "Confine Info:\t" << fDetCons->GetConfine() << G4endl
+				<< "Simulation Result:" << G4endl;
+		}
+		else
+		{
+			output.open(txtname + ".txt", std::ios::app);
+		}
+		G4double eff;
+		if (BulkEventCount.GetValue() != 0) {
+			eff = VetoEventCount.GetValue() / BulkEventCount.GetValue();
+		}
+		else
+		{
+			eff = 0;
+		}
+
+		G4double ROIeff;
+		if (ROIEventCount.GetValue() != 0) {
+			ROIeff = ROIVetoEventCount.GetValue() / ROIEventCount.GetValue();
+		}
+		else
+		{
+			ROIeff = 0;
+		}
+
+		if (aRun->GetRunID() == 0) {
+			output
+				<< std::setw(10) << std::left << "Run ID" << '\t'
+				<< std::setw(40) << std::left << "Number of Event" << '\t'
+				<< std::setw(40) << std::left << "Primary Particle" << '\t'
+				<< std::setw(40) << std::left << "Primary Energy(MeV)" << '\t'
+				<< std::setw(40) << std::left << "SiPMEvent" << '\t'
+				<< std::setw(40) << std::left << "VetoEvent" << '\t'
+				<< std::setw(40) << std::left << "VetoEvent_1" << '\t'
+				<< std::setw(40) << std::left << "VetoEvent_2" << '\t'
+				<< std::setw(40) << std::left << "VetoEvent_3" << '\t'
+				<< std::setw(40) << std::left << "VetoEvent_4" << '\t'
+				<< std::setw(40) << std::left << "BulkEvent" << '\t'
+				<< std::setw(40) << std::left << "DetectableEvent" << '\t'
+				<< std::setw(40) << std::left << "VetoPossibleEvent" << '\t'
+				<< std::setw(40) << std::left << "VetoEfficiency" << '\t'
+				<< std::setw(40) << std::left << "ROIEvent" << '\t'
+				<< std::setw(40) << std::left << "ROIVetoEvent" << '\t'
+				<< std::setw(40) << std::left << "ROIVetoPossibleEvent" << '\t'
+				<< std::setw(40) << std::left << "ROIVetoEfficiency" << '\t' << G4endl;
+		}
+
+		output
+			<< std::setw(10) << std::left << aRun->GetRunID() << '\t'
+			<< std::setw(40) << std::left << aRun->GetNumberOfEvent() << '\t'
+			<< std::setw(40) << std::left << fPrimaryGenerator->GetPrimaryName() << '\t'
+			<< std::setw(40) << std::left << std::setiosflags(std::ios::fixed) << std::setprecision(2) << fPrimaryGenerator->GetPrimaryE() << '\t'
 			<< std::setw(40) << std::left << SiPMEventCount.GetValue() << '\t'
 			<< std::setw(40) << std::left << VetoEventCount.GetValue() << '\t'
 			<< std::setw(40) << std::left << VetoEventCount_1.GetValue() << '\t'

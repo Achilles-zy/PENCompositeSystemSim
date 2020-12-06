@@ -20,7 +20,7 @@
 #include "G4OpRayleigh.hh"
 #include "G4OpMieHG.hh"
 #include "G4OpBoundaryProcess.hh"
-
+#include "G4OpWLS.hh"
 #include "G4LossTableManager.hh"
 #include "G4EmSaturation.hh"
 
@@ -43,6 +43,7 @@ G4ThreadLocal G4OpAbsorption* PENPhysicsList::fAbsorptionProcess = 0;
 G4ThreadLocal G4OpRayleigh* PENPhysicsList::fRayleighScatteringProcess = 0;
 G4ThreadLocal G4OpMieHG* PENPhysicsList::fMieHGScatteringProcess = 0;
 G4ThreadLocal G4OpBoundaryProcess* PENPhysicsList::fBoundaryProcess = 0;
+G4ThreadLocal G4OpWLS* PENPhysicsList::fWLSProcess = 0;
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -269,6 +270,9 @@ void PENPhysicsList::ConstructOp()
   fCerenkovProcess->SetMaxBetaChangePerStep(10.0);
   fCerenkovProcess->SetTrackSecondariesFirst(true);
 
+  fWLSProcess = new G4OpWLS("OpWLS");
+  //fWLSProcess->UseTimeProfile();
+
   fScintillationProcess = new G4Scintillation("Scintillation");
   fScintillationProcess->SetScintillationYieldFactor(1.0);
   fScintillationProcess->SetScintillationExcitationRatio(0.0);//Line added by Luis
@@ -344,6 +348,7 @@ void PENPhysicsList::ConstructOp()
       pmanager->AddDiscreteProcess(fRayleighScatteringProcess);
       pmanager->AddDiscreteProcess(fMieHGScatteringProcess);
       pmanager->AddDiscreteProcess(fBoundaryProcess);
+      pmanager->AddDiscreteProcess(fWLSProcess);
     }
   }
 }

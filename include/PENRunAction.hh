@@ -25,6 +25,7 @@ class PENRunAction : public G4UserRunAction
     void EndOfRunAction(const G4Run*);
 
 	void CDEXOutput(const G4Run* aRun);
+	void CDEXArrayOutput(const G4Run* aRun);
 
 	void RefreshOutput(G4bool b) {
 		ifRefresh = b;

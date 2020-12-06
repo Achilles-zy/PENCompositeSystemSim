@@ -68,10 +68,10 @@ PENDetectorConstruction::PENDetectorConstruction() :
 	physSiPM3(nullptr),
 	physSiPM4(nullptr),
 	physSiPM5(nullptr),
-	physSiPM6(nullptr),
-	physSiPM7(nullptr),
-	physSiPM8(nullptr),
-	physSiPM9(nullptr),
+	physContainerSiPM0(nullptr),
+	physContainerSiPM1(nullptr),
+	physContainerSiPM2(nullptr),
+	physContainerSiPM3(nullptr),
 	physSiPMArray0(nullptr),
 	physSiPMArray1(nullptr),
 	physSiPMArray2(nullptr),
@@ -83,10 +83,11 @@ PENDetectorConstruction::PENDetectorConstruction() :
 	physContainerCrystal(nullptr),//Crystal in Container
 	physStringBoxBrick(nullptr),
 	physStringBoxCrystal(nullptr),//Crystal in String Box
+	physASICPlate(nullptr),
 	//logicPENShell(nullptr),
 	logicContainerCrystal(nullptr),
 	logicStringBoxCrystal(nullptr),
-	solidSideSiPM(nullptr)
+	logicASICPlate(nullptr)
 {
 	fDetectorMessenger = new PENDetectorMessenger(this);
 	matconstructor = new PENMaterials;
@@ -101,16 +102,19 @@ PENDetectorConstruction::PENDetectorConstruction() :
 	fMode = "Array-1";
 	fWirePos = G4ThreeVector();
 	fWireRadius = 0.7 * mm;
-	fWireLength = 20 * cm;
+	fWireLength = 4 * cm;
 	fWireCentDist = 5 * cm;
 	pmtReflectivity = 0.50;
-	fPENShellLength = 10 * cm;
+	fPENShellLength = 6.5 * cm;
 	fPENShellRadius = 20 * cm;
 	fPENPropertiesID = 1;
 	fBEGeRadius = 40 * mm;
 	fBEGeHeight = 40 * mm;
 	fSArBrickHeight = 150 * cm;
 	fSArBrickRadius = 40 * cm;
+	fASICLength = 2 * cm;
+	fASICWidth = 1 * cm;
+	fASICThickness = 1 * mm;
 	absFactor = 1.5;
 	fDetMat = matEnGe;
 	G4cout << "Start Construction" << G4endl;
@@ -125,6 +129,126 @@ PENDetectorConstruction::PENDetectorConstruction() :
 
 PENDetectorConstruction::~PENDetectorConstruction()
 {
+}
+
+G4VPhysicalVolume* PENDetectorConstruction::GetPhysicalVolumeByName(const G4String& name)
+{
+	// access the store of physical volumes
+	G4PhysicalVolumeStore* pvs = G4PhysicalVolumeStore::GetInstance();
+	G4VPhysicalVolume* pv;
+	G4int npv = pvs->size();
+	G4int ipv;
+	G4cout << "Volume Name List:" << G4endl;
+	for (ipv = 0; ipv < npv; ipv++) {
+		pv = (*pvs)[ipv];
+		if (!pv)
+			break;
+		if (pv->GetName() == name)
+			return pv;
+		G4String VolumeName = pv->GetName();
+		G4double VolumeMass = pv->GetLogicalVolume()->GetMass();
+	}
+	return NULL;
+}
+
+void PENDetectorConstruction::GetPhysicalVolumeProperties()
+{
+	// access the store of physical volumes
+	VolumeLUT.clear();
+	VolumeNameLUT.clear();
+	G4PhysicalVolumeStore* pvs = G4PhysicalVolumeStore::GetInstance();
+	G4VPhysicalVolume* pv;
+	G4int npv = pvs->size();
+	G4int ipv;
+	G4cout << "Volume Name List:" << G4endl;
+	std::ofstream output;
+	output.open("PhysicalVolumeProperties" + GetMode() + ".txt", std::ios::ate);
+	output << "Volume ID" << '\t' << "Volume Name" << '\t' << "Volume Mass" << G4endl;
+	for (ipv = 0; ipv < npv; ipv++) {
+		pv = (*pvs)[ipv];
+		if (!pv)
+			break;
+		VolumeLUT.insert(pair<G4VPhysicalVolume*, G4int>(pv, ipv));
+		VolumeNameLUT.insert(pair<G4VPhysicalVolume*, G4String>(pv, pv->GetName()));
+		G4String VolumeName = pv->GetName();
+		G4double VolumeMass = pv->GetLogicalVolume()->GetMass();
+		G4cout << "Volume ID:" << ipv << " VolumeName:" << VolumeName << " VolumeMass" << VolumeMass << G4endl;
+		output << ipv << '\t' << VolumeName << '\t' << VolumeMass << G4endl;
+	}
+	output.close();
+}
+
+void PENDetectorConstruction::ResetPhysicalVolumeNames()
+{
+	// access the store of physical volumes
+	G4PhysicalVolumeStore* pvs = G4PhysicalVolumeStore::GetInstance();
+	G4VPhysicalVolume* pv;
+	G4int npv = pvs->size();
+	G4int ipv;
+
+	for (ipv = 0; ipv < npv; ipv++) {
+		pv = (*pvs)[ipv];
+		if (!pv) break;
+		std::map<G4VPhysicalVolume*, G4String>::iterator iter;
+		iter = VolumeNameLUT.find(pv);
+		if (iter != VolumeNameLUT.end()) {
+			pv->SetName(iter->second);
+		}
+	}
+	G4cout << "Reset physical volume names done!" << G4endl;
+}
+
+void PENDetectorConstruction::SetPVNamesForConfine_PENShell() {
+	G4PhysicalVolumeStore* pvs = G4PhysicalVolumeStore::GetInstance();
+	G4VPhysicalVolume* pv;
+	G4int npv = pvs->size();
+	G4int ipv;
+
+	for (ipv = 0; ipv < npv; ipv++) {
+		pv = (*pvs)[ipv];
+		if (!pv) break;
+		G4String PVname = pv->GetName();
+		G4String name1;
+		G4String name2;
+		G4cout << "Set names:" << G4endl;
+		for (G4int impID = 1; impID < 25; impID++) {
+			name1 = "av_1_impr_" + std::to_string(impID)+ "_logicPENShell_pv_0";
+			name2 = "av_1_impr_" + std::to_string(impID) + "_logicPENShell_pv_1";
+			if (PVname == name1 || PVname == name2) {
+				pv->SetName("PENShell");
+				break;
+			}
+			//G4cout << pv->GetName() << G4endl;
+		}
+	}
+	G4cout << "Set physical volume names done!" << G4endl;
+}
+
+
+void PENDetectorConstruction::SetPVNamesForConfine_SinglePENShell() {
+	G4PhysicalVolumeStore* pvs = G4PhysicalVolumeStore::GetInstance();
+	G4VPhysicalVolume* pv;
+	G4int npv = pvs->size();
+	G4int ipv;
+
+	for (ipv = 0; ipv < npv; ipv++) {
+		pv = (*pvs)[ipv];
+		if (!pv) break;
+		G4String PVname = pv->GetName();
+		G4String name1;
+		G4String name2;
+		G4cout << "Set names:" << G4endl;
+		for (G4int impID = 1; impID < 25; impID++) {
+			name1 = "av_1_impr_" + std::to_string(impID) + "_logicPENShell_pv_0";
+			name2 = "av_1_impr_" + std::to_string(impID) + "_logicPENShell_pv_1";
+			if (PVname == name1 || PVname == name2) {
+				pv->SetName("av_1_impr_" + std::to_string(impID) + "_logicPENShell_pv");
+				break;
+			}
+			//G4cout << pv->GetName() << G4endl;
+		}
+	}
+	G4cout << "Set physical volume names done!" << G4endl;
 }
 
 void PENDetectorConstruction::SetWireType(G4String type) {
@@ -1067,7 +1191,7 @@ G4LogicalVolume* PENDetectorConstruction::ConstructContainerBrick() {
 	logicContainerCrystal = new G4LogicalVolume(solidContainerCrystal, matLAr, "logicContainerCrystal");
 	//auto logicSArContainer = new G4LogicalVolume(solidSArCrystal, matPEN, "logicSArContainer");
 
-	physContainerCrystal = new G4PVPlacement(0, G4ThreeVector(0, 0, 0), logicContainerCrystal, "SArCrystal", logicContainerBrick, false, 0, CheckOverlaps);
+	physContainerCrystal = new G4PVPlacement(0, G4ThreeVector(0, 0, 0), logicContainerCrystal, "ContainerCrystal", logicContainerBrick, false, 0, CheckOverlaps);
 	//auto physSArContainer = new G4PVPlacement(0, G4ThreeVector(), logicSArContainer, "SArContainer", logicSArBrick, false, 0, CheckOverlaps);
 
 
@@ -1086,7 +1210,7 @@ G4LogicalVolume* PENDetectorConstruction::ConstructStringBoxBrick() {
 	logicStringBoxCrystal = new G4LogicalVolume(solidStringBoxCrystal, matLAr, "logicStringBoxCrystal");
 	//auto logicSArContainer = new G4LogicalVolume(solidSArCrystal, matPEN, "logicSArContainer");
 
-	physContainerCrystal = new G4PVPlacement(0, G4ThreeVector(0, 0, 0), logicStringBoxCrystal, "ContainerCrystal", logicStringBoxBrick, false, 0, CheckOverlaps);
+	physStringBoxCrystal = new G4PVPlacement(0, G4ThreeVector(0, 0, 0), logicStringBoxCrystal, "StringBoxCrystal", logicStringBoxBrick, false, 0, CheckOverlaps);
 	//auto physSArContainer = new G4PVPlacement(0, G4ThreeVector(), logicSArContainer, "SArContainer", logicSArBrick, false, 0, CheckOverlaps);
 
 	return logicStringBoxBrick;
@@ -1274,6 +1398,17 @@ G4LogicalVolume* PENDetectorConstruction::ConstructSArSiPMArray() {
 	return logicSiPMArray;
 }
 
+G4LogicalVolume* PENDetectorConstruction::ConstructASICPlate() {
+	G4double AsicThickness = 1 * mm;
+	G4double AsicLength = 2 * cm;
+	G4double AsicWidth = 1 * cm;
+	G4Box* solidAsicPlate = new G4Box("solidAsicPlate", AsicLength / 2, AsicWidth / 2, AsicThickness / 2);
+	G4LogicalVolume* logicAsicPlate = new G4LogicalVolume(solidAsicPlate, matSi, "logicAsicPlate");
+
+	return logicAsicPlate;
+}
+
+
 G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 {
 	G4NistManager* nist = G4NistManager::Instance();
@@ -1439,7 +1574,7 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 	PEN_LN2_Ref1->SetFinish(PolishedESR_LUT);
 	G4OpticalSurface* PEN_LN2 = new G4OpticalSurface("PEN_LN2");
 	PEN_LN2->SetType(dielectric_LUTDAVIS);
-	PEN_LN2->SetModel(LUT);
+	PEN_LN2->SetModel(DAVIS);
 	PEN_LN2->SetFinish(Polished_LUT);
 
 	G4OpticalSurface* Ge_LN2 = new G4OpticalSurface("Ge_LN2");
@@ -1450,6 +1585,10 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 	Ge_PEN->SetType(dielectric_metal);
 	Ge_PEN->SetModel(glisur);
 	Ge_PEN->SetFinish(polished);
+	G4OpticalSurface* Ge_Skin = new G4OpticalSurface("Ge_Skin");
+	Ge_Skin->SetType(dielectric_metal);
+	Ge_Skin->SetModel(glisur);
+	Ge_Skin->SetFinish(polished);
 
 	G4OpticalSurface* Wire_LN2 = new G4OpticalSurface("Wire_LN2");
 	Wire_LN2->SetType(dielectric_LUTDAVIS);
@@ -1462,7 +1601,7 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 	G4LogicalBorderSurface* InnerShell_LN2_LBS = new G4LogicalBorderSurface("InnerShell_LN2_LBS", physEnv, physInnerShell, PEN_LN2);
 	G4LogicalBorderSurface* Ge_LN2_LBS = new G4LogicalBorderSurface("Ge_LN2_LBS", physEnv, physDet, Ge_LN2);
 	G4LogicalBorderSurface* Ge_PEN_LBS = new G4LogicalBorderSurface("Ge_PEN_LBS", physInnerShell, physDet, Ge_PEN);
-
+	//G4LogicalSkinSurface* Ge_LSS = new G4LogicalSkinSurface("Ge_LSS", logicTotalCrystal, Ge_Skin);
 
 	//=============================================================//
 	//                          REflector                          //
@@ -1582,6 +1721,7 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructUnit()
 }
 
 G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
+	
 	G4NistManager* nist = G4NistManager::Instance();
 	G4bool checkOverlaps = true;
 
@@ -1697,10 +1837,13 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	G4RotationMatrix* RotUnit = new G4RotationMatrix();
 	RotUnit->rotateX(90 * degree);
 	// Rotation of the assembly inside the world
-	for (G4int i = 0; i < 19; i++) {
-		G4ThreeVector PosUnit = G4ThreeVector(0, (-585 + 65 * i) * mm, 0);
-		G4Transform3D TrUnit = G4Transform3D(*RotUnit, PosUnit);
-		logicUnit->MakeImprint(logicStringBoxCrystal, TrUnit);
+	for (G4int i = 0; i < 9; i++) {
+		G4ThreeVector PosUnit1 = G4ThreeVector(0, (32.5 + 65 * i) * mm, 0);
+		G4ThreeVector PosUnit2 = G4ThreeVector(0, (-32.5 - 65 * i) * mm, 0);
+		G4Transform3D TrUnit1 = G4Transform3D(*RotUnit, PosUnit1);
+		G4Transform3D TrUnit2 = G4Transform3D(*RotUnit, PosUnit2);
+		logicUnit->MakeImprint(logicStringBoxCrystal, TrUnit1);
+		logicUnit->MakeImprint(logicStringBoxCrystal, TrUnit2);
 	}
 	
 
@@ -1761,10 +1904,10 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	//========================PEN shell and wire paremeters========================//
 
 	G4String WireType = fWireType;
-	G4double wireradius = 0.7 * mm;
+
 	G4double LN2Gap = 0.5 * mm;
-	G4double ShellThickness = 0.5 * cm;
-	G4double WireLength = 65 * mm;
+	G4double ShellThickness = 5 * mm;
+	G4double WireLength = 40 * mm;
 	G4double outerGeRadius = 40 * mm;
 
 	//=============================================================================//
@@ -1778,22 +1921,39 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	G4ThreeVector WirePlacement;
 
 	if (WireType == "A1") {
+		G4double WireRadius = 1.25 * mm / 2;
+		fWireRadius = WireRadius;
 		G4LogicalVolume* logicWire = ConstructA1(WireLength);
-		fWireCentDist = outerGeRadius + LN2Gap + ShellThickness + fWireRadius;
-		WirePlacement = G4ThreeVector(fWireCentDist, 0, 0);
+		fWireCentDist = outerGeRadius + ShellThickness - WireRadius;
+		WirePlacement = G4ThreeVector(0, fWireCentDist,  0);
 		fWirePos = WirePlacement;
-		//physWire = new G4PVPlacement(0, WirePlacement, logicWire, "Wire", logicStringBoxCrystal, false, 0, checkOverlaps);
+		physWire = new G4PVPlacement(0, WirePlacement, logicWire, "Wire", logicInnerShell, false, 0, checkOverlaps);
 	}
 	else if (WireType == "A2") {
+		G4double WireRadius = 1 * mm / 2;
+		fWireRadius = WireRadius;
 		G4LogicalVolume* logicWire = ConstructA2(WireLength);
-		fWireCentDist = outerGeRadius + LN2Gap + ShellThickness + fWireRadius;
-		WirePlacement = G4ThreeVector(fWireCentDist, 0, 0);
+		fWireCentDist = outerGeRadius + LN2Gap + ShellThickness - WireRadius;
+		WirePlacement = G4ThreeVector(0, fWireCentDist, 0);
 		fWirePos = WirePlacement;
-		//physWire = new G4PVPlacement(0, WirePlacement, logicWire, "Wire", logicStringBoxCrystal, false, 0, checkOverlaps);
+		physWire = new G4PVPlacement(0, WirePlacement, logicWire, "Wire", logicInnerShell, false, 0, checkOverlaps);
 	}
 	else {
 		G4cout << "Type does not exist!" << G4endl;
 	}
+
+
+	//=============================================================//
+	//                         ASIC Plate                          //
+	//=============================================================//
+
+	fASICWidth = 1 * cm;
+	fASICLength = 2 * cm;
+	fASICThickness = 1 * mm;
+	G4ThreeVector ASICPlacement = G4ThreeVector(0, 0, -fBEGeHeight / 2 - ShellThickness + fASICThickness / 2);
+
+	logicASICPlate = ConstructASICPlate();
+	physASICPlate = new G4PVPlacement(0, ASICPlacement, logicASICPlate, "ASIC", logicInnerShell, false, 0, checkOverlaps);
 
 	//=============================================================//
 	//                        Optical Surfaces                     //
@@ -1943,60 +2103,23 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	Ge_PEN->SetType(dielectric_metal);
 	Ge_PEN->SetModel(glisur);
 	Ge_PEN->SetFinish(polished);
+	G4OpticalSurface* Ge_Skin = new G4OpticalSurface("Ge_Skin");
+	Ge_Skin->SetType(dielectric_metal);
+	Ge_Skin->SetModel(glisur);
+	Ge_Skin->SetFinish(polished);
 
 	G4LogicalBorderSurface* Ge_PEN_LBS = new G4LogicalBorderSurface("Ge_PEN_LBS", physInnerShell, physDet, Ge_PEN);
 	G4LogicalBorderSurface* Ge_SAr_LBS = new G4LogicalBorderSurface("Ge_SAr_LBS", physStringBoxCrystal, physDet, Ge_SAr);
+	G4LogicalSkinSurface* Ge_LSS = new G4LogicalSkinSurface("Ge_LSS", logicTotalCrystal, Ge_Skin);
 	G4LogicalBorderSurface* Wire_SAr_LBS = new G4LogicalBorderSurface("Wire_SAr_LBS", physStringBoxCrystal, physWire, Wire_SAr);
 	G4LogicalBorderSurface* Box_SAr_LBS = new G4LogicalBorderSurface("Box_SAr_LBS", physStringBoxCrystal, physStringBoxBrick, PEN_SAr_Ref);
 	G4LogicalBorderSurface* Box_LN2_LBS = new G4LogicalBorderSurface("Box_LN2_LBS", physStringBoxBrick, physEnv, PEN_LN2_Ref);
 	G4LogicalBorderSurface* InnerShell_SAr_LBS = new G4LogicalBorderSurface("InnerShell_SAr_LBS", physStringBoxCrystal, physInnerShell,  PEN_SAr_Ref);
 	G4LogicalBorderSurface* OuterShell_SAr_LBS = new G4LogicalBorderSurface("OuterShell_SAr_LBS", physStringBoxCrystal, physOuterShell, PEN_SAr_Ref);
-
-
+	//GetPhysicalVolumeByName("");
+	GetPhysicalVolumeProperties();
 	return physWorld;
 
-	/*
-	G4OpticalSurface* SiPM_LN2 = new G4OpticalSurface("SiPM_LN2");
-	SiPM_LN2->SetType(dielectric_LUTDAVIS);
-	SiPM_LN2->SetModel(DAVIS);
-	SiPM_LN2->SetFinish(Detector_LUT);
-
-	G4OpticalSurface* SiPM_SAr = new G4OpticalSurface("SiPM_SAr");
-	SiPM_LN2->SetType(dielectric_LUTDAVIS);
-	SiPM_LN2->SetModel(DAVIS);
-	SiPM_LN2->SetFinish(Detector_LUT);
-
-	const G4int NUMENTRIES_CHIP = 11;
-	const double hc = 6.62606876 * 2.99792458 * 100. / 1.602176462;
-	G4double sipm_pp[NUMENTRIES_CHIP] = { hc / 600. * eV, hc / 590. * eV, hc / 580. * eV, hc / 570. * eV, hc / 560. * eV, hc / 550. * eV, hc / 540. * eV, hc / 530. * eV, hc / 520. * eV,hc / 510. * eV,hc / 500. * eV };
-	G4double sipm_sl[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
-	G4double sipm_ss[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
-	G4double sipm_bs[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
-	G4double sipm_rindex[NUMENTRIES_CHIP] = { 1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406,1.406 };
-	G4double sipm_reflectivity[NUMENTRIES_CHIP] = { 0,0,0,0,0,0,0,0,0,0,0 };
-	// G4double sipm_efficiency[NUMENTRIES_CHIP] = {0.20,0.21,0.23,0.25,0.26,0.28,0.30,0.32,0.34,0.36,0.38};
-	G4double sipm_efficiency[NUMENTRIES_CHIP] = { 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0 };
-
-	G4MaterialPropertiesTable* SIPM_MPT_Surf = new G4MaterialPropertiesTable();
-	// SIPM_MPT_Surf->AddProperty("SPECULARLOBECONSTANT",sipm_pp,sipm_sl,NUMENTRIES_CHIP);
-	// SIPM_MPT_Surf->AddProperty("SPECULARSPIKECONSTANT",sipm_pp,sipm_ss,NUMENTRIES_CHIP);
-	// SIPM_MPT_Surf->AddProperty("BACKSCATTERCONSTANT",sipm_pp,sipm_bs,NUMENTRIES_CHIP);
-	SIPM_MPT_Surf->AddProperty("REFLECTIVITY", sipm_pp, sipm_reflectivity, NUMENTRIES_CHIP);
-	SIPM_MPT_Surf->AddProperty("EFFICIENCY", sipm_pp, sipm_efficiency, NUMENTRIES_CHIP);
-	// SIPM_MPT_Surf->AddProperty("RINDEX",sipm_pp,sipm_rindex,NUMENTRIES_CHIP);
-
-	SiPM_SAr->SetMaterialPropertiesTable(SIPM_MPT_Surf);
-	SiPM_LN2->SetMaterialPropertiesTable(SIPM_MPT_Surf);
-
-	G4LogicalBorderSurface* SiPM_SAr_LBS_0 = new G4LogicalBorderSurface("SiPM_SAr_LBS_0", physStringBoxCrystal, physSiPM0, SiPM_SAr);
-	G4LogicalBorderSurface* SiPM_SAr_LBS_1 = new G4LogicalBorderSurface("SiPM_SAr_LBS_1", physStringBoxCrystal, physSiPM1, SiPM_SAr);
-	G4LogicalBorderSurface* SiPM_SAr_LBS_2 = new G4LogicalBorderSurface("SiPM_SAr_LBS_2", physStringBoxCrystal, physSiPM2, SiPM_SAr);
-	G4LogicalBorderSurface* SiPM_SAr_LBS_3 = new G4LogicalBorderSurface("SiPM_SAr_LBS_3", physStringBoxCrystal, physSiPM3, SiPM_SAr);
-	G4LogicalBorderSurface* SiPM_SAr_LBS_4 = new G4LogicalBorderSurface("SiPM_SAr_LBS_4", physStringBoxCrystal, physSiPM4, SiPM_SAr);
-	G4LogicalBorderSurface* SiPM_SAr_LBS_5 = new G4LogicalBorderSurface("SiPM_SAr_LBS_5", physStringBoxCrystal, physSiPM5, SiPM_SAr);
-	
-	// G4LogicalBorderSurface* SiPM_SAr_LBS_P = new G4LogicalBorderSurface("SiPM_SAr_LBS_P", physEnv, physSiPMP, SiPM_SAr_P);
-	*/
 }
 
 G4VPhysicalVolume* PENDetectorConstruction::ConstructSArUnit() {
@@ -2048,3 +2171,4 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructSArUnit() {
 
 	return physWorld;
 }
+

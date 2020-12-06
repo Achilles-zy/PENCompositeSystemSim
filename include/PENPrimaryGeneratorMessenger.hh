@@ -29,6 +29,7 @@ class PENPrimaryGeneratorMessenger: public G4UImessenger
     G4UIdirectory*                  fSrcDir;
 
     G4UIcmdWithAString* cmdSetSrcType;
+    G4UIcmdWithAnInteger* cmdSetImprintID;
 
 };
 

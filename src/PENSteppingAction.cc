@@ -77,7 +77,7 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 		PENEvent->DetectableTrue();
 	}
 
-	for (int i = 0; i <= 9; i++) {
+	for (int i = 0; i <= 4; i++) {
 		if (volume == detectorConstruction->GetSiPM(i) && particle_name == "opticalphoton" && detectorConstruction->GetSiPM(i) != nullptr) {
 			aStep->GetTrack()->SetTrackStatus(fStopAndKill);
 			//G4cout << i << G4endl;
