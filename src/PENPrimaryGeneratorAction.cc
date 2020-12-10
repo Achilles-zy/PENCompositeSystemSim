@@ -17,7 +17,7 @@ PENPrimaryGeneratorAction::PENPrimaryGeneratorAction(PENDetectorConstruction* de
 	PrimaryE(0),
 	InitialE(1 * keV),
 	PrimaryName(""),
-	SrcType("InnerShell"),
+	SrcType("PENShell"),
 	ImprintID(1)
 {
     fPENGPS = new G4GeneralParticleSource();
@@ -191,10 +191,6 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	else if (mode == "Array-1") {
 
 		if (SrcType == "SinglePENShell") {
-			if (EvtID == 0) {
-				fDetCons->ResetPhysicalVolumeNames();
-				fDetCons->SetPVNamesForConfine_PENShell();
-			}
 			G4ThreeVector CentCoord;
 			G4double zCoord;
 			if (ImprintID % 2 == 0) {
@@ -226,10 +222,6 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		}
 
 		else if (SrcType == "PENShell") {
-			if (EvtID == 0) {
-				fDetCons->ResetPhysicalVolumeNames();
-				fDetCons->SetPVNamesForConfine_PENShell();
-			}
 			G4double Radius = fDetCons->GetPENShellRadius();
 			G4double Length = fDetCons->GetPENShellLength() * 20;
 
@@ -322,10 +314,6 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		}
 
 		else if (SrcType == "SingleASIC") {
-		if (EvtID == 0) {
-			fDetCons->ResetPhysicalVolumeNames();
-			fDetCons->SetPVNamesForConfine_PENShell();
-		}
 		G4ThreeVector CentCoord;
 		G4double zCoord;
 		if (ImprintID % 2 == 0) {

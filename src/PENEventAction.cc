@@ -10,7 +10,7 @@
 #include "G4ios.hh"
 #include "g4root.hh"
 #include "G4SystemOfUnits.hh"
-
+#include "G4RunManager.hh"
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
  
 PENEventAction::PENEventAction(PENRunAction* runaction)
@@ -83,6 +83,7 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
 
   //G4int rownb = sizeof(SiPMPhotonCount) / sizeof(SiPMPhotonCount[0]);
   //G4int columnnb = sizeof(SiPMPhotonCount[0]) / sizeof(SiPMPhotonCount[0][0]);
+
   for (int i = 0; i < RowNb; i++)
   {
       for (int j = 0; j < ColumnNb; j++)

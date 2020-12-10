@@ -22,6 +22,7 @@ class PENMaterials;
 class G4VPhysicalVolume;
 class G4LogicalVolume;
 class PENDeterctorMessenger;
+class G4AssemblyVolume;
 
 class PENDetectorConstruction : public G4VUserDetectorConstruction
 {
@@ -40,8 +41,6 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4VPhysicalVolume* ConstructArray_1();
         G4VPhysicalVolume* GetPhysicalVolumeByName(const G4String& name);
         void ResetPhysicalVolumeNames();
-        void SetPVNamesForConfine_PENShell();
-        void SetPVNamesForConfine_SinglePENShell();
         void GetPhysicalVolumeProperties();
         std::map<G4VPhysicalVolume*, G4int> VolumeLUT;
         std::map<G4VPhysicalVolume*, G4String> VolumeNameLUT;
@@ -60,10 +59,12 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4LogicalVolume* ConstructOuterReflector();//Outer Reflector of OuterShell
         G4LogicalVolume* ConstructInnerReflector();//Inner Reflector of OuterShell
         G4LogicalVolume* ConstructReflector();
-        G4LogicalVolume* ConstructSiPMArray();
-        G4LogicalVolume* ConstructContainerSiPMArray();
-        G4LogicalVolume* ConstructSArSiPMArray();
+
         G4LogicalVolume* ConstructASICPlate();
+        G4AssemblyVolume* ConstructSArSiPMArray();
+        G4AssemblyVolume* ConstructContainerSiPMArray();
+        G4AssemblyVolume* ConstructSiPMArray();
+
 
         void DefineMat();
 
@@ -79,6 +80,9 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         void SetInnerReflector(G4bool);
 
         //void SetLayerNbS(G4String);
+        G4String GetMode() {
+            return fMode;
+        }
 
         G4ThreeVector GetWirePos() {
             return fWirePos;
@@ -102,10 +106,6 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
 
         G4String GetRunInfo() {
             return fRunInfo;
-        }
-
-        G4String GetMode() {
-            return fMode;
         }
 
         G4String GetReflectorType() {
@@ -244,6 +244,9 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4double fASICWidth;
         G4double fASICLength;
         G4double fASICThickness;
+        G4double fOuterShellLength;
+        G4double fOuterShellHeight;
+        G4double fOuterShellWidth;
 
         PENDetectorMessenger* fDetectorMessenger;
         G4bool CheckOverlaps;

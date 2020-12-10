@@ -30,6 +30,7 @@
 //#endif
 
 #include "Randomize.hh"
+#include "PENMaterials.hh"
 
 int main(int argc, char** argv)
 {
@@ -42,8 +43,6 @@ int main(int argc, char** argv)
 #else
 	G4RunManager* PENRunManager = new G4RunManager;
 #endif
-
-
 
     PENDetectorConstruction* PENDetCons = new PENDetectorConstruction();
     PENRunManager -> SetUserInitialization(PENDetCons);
@@ -74,7 +73,7 @@ int main(int argc, char** argv)
     G4UImanager* UImanager = G4UImanager::GetUIpointer();
     UImanager->ApplyCommand("/run/verbose 0");
     UImanager->ApplyCommand("/event/verbose 0");
-    UImanager->ApplyCommand("/tracking/verbose 0");
+    UImanager->ApplyCommand("/tracking/verbose 1");
     UImanager->ApplyCommand("/process/em/fluo true");
     UImanager->ApplyCommand("/process/em/auger true");
     UImanager->ApplyCommand("/process/em/augerCascade true");

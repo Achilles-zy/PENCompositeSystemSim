@@ -40,7 +40,7 @@ class PENEventAction : public G4UserEventAction
 
   private:
     G4double edepBulk;
-    G4int SiPMPhotonCount[6][5];
+    G4int SiPMPhotonCount[100][2];
     G4int PhotonCut_0;
     G4int PhotonCut_1;
     G4int PhotonCut_2;

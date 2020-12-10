@@ -77,35 +77,42 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 		PENEvent->DetectableTrue();
 	}
 
-	for (int i = 0; i <= 4; i++) {
+	G4cout << aStep->GetPostStepPoint()->GetPosition() << G4endl;
+	for (int i = 0; i < 1; i++) {
 		if (volume == detectorConstruction->GetSiPM(i) && particle_name == "opticalphoton" && detectorConstruction->GetSiPM(i) != nullptr) {
 			aStep->GetTrack()->SetTrackStatus(fStopAndKill);
 			//G4cout << i << G4endl;
 			//G4cout << detectorConstruction->GetSiPM(i)->GetName() << G4endl;
-			G4int SiPMArrayID = touchable->GetCopyNumber(1);
-			G4int SiPMID = touchable->GetCopyNumber(0);
-			PENEvent->AddToSiPM(SiPMArrayID, SiPMID);
+
+			G4int GetCopyNumber0 = touchable->GetCopyNumber(0);
+			G4int GetCopyNumber1 = touchable->GetCopyNumber(1);
+			G4int GetCopyNumber2 = touchable->GetCopyNumber(2);
+			G4cout << volume->GetName() << G4endl;
+			G4cout << "CopyNb0 =" << GetCopyNumber0 << G4endl;
+			G4cout << "CopyNb1 =" << GetCopyNumber1 << G4endl;
+			G4cout << "CopyNb2 =" << GetCopyNumber2 << G4endl;
+			PENEvent->AddToSiPM(GetCopyNumber1, GetCopyNumber0);
 			PENEvent->CountTotalSiPMPhoton(1);
 		}
 	}
 
-	G4int processtype = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessSubType();
-	G4int creatorprocess = aStep->GetTrack()->GetCreatorProcess()->GetProcessSubType();
-	G4int parentID = aStep->GetTrack()->GetParentID();
+	//G4int processtype = aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessSubType();
+	//G4int creatorprocess = aStep->GetTrack()->GetCreatorProcess()->GetProcessSubType();
+	//G4int parentID = aStep->GetTrack()->GetParentID();
 
-	if (parentID == 1 ) {
-		if (processtype == fScintillation || processtype == fRadioactiveDecay) {
-			//aStep->GetTrack()->SetTrackStatus(fKillTrackAndSecondaries);
-		}
-	}
+	//if (parentID == 1 ) {
+	//	if (processtype == fScintillation || processtype == fRadioactiveDecay) {
+	//		//aStep->GetTrack()->SetTrackStatus(fKillTrackAndSecondaries);
+	//	}
+	//}
 
-	if (processtype == fRadioactiveDecay) {
-		//G4cout << "Parent ID =" <<parentID << G4endl;
-	}
+	//if (processtype == fRadioactiveDecay) {
+	//	//G4cout << "Parent ID =" <<parentID << G4endl;
+	//}
 
-	if (parentID == 1) {
-		//G4cout << "Parent ID =" << parentID << "Particle =" << aStep->GetTrack()->GetParticleDefinition()->GetParticleName() << "Process =" << aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName() <<aStep->GetTotalEnergyDeposit()<< G4endl;
-	}
+	//if (parentID == 1) {
+	//	//G4cout << "Parent ID =" << parentID << "Particle =" << aStep->GetTrack()->GetParticleDefinition()->GetParticleName() << "Process =" << aStep->GetPostStepPoint()->GetProcessDefinedStep()->GetProcessName() <<aStep->GetTotalEnergyDeposit()<< G4endl;
+	//}
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

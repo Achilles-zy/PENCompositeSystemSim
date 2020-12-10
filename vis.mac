@@ -108,12 +108,20 @@
 /vis/geometry/set/visibility logicWorld 0 false
 /vis/geometry/set/visibility logicSiPMArray 0 false
 /vis/geometry/set/visibility logicReflector 0 false
-/vis/geometry/set/visibility logicSArBrick 0 false
+/vis/geometry/set/visibility logicVirtualUnitBox 0 false
+/vis/geometry/set/visibility logicStringBoxCrystal 0 false
+/vis/geometry/set/visibility logicContainerCrystal 0 false
+/vis/geometry/set/visibility logicContainerBrick 0 false
+/vis/geometry/set/visibility logicStringBoxBrick 0 false
+
+
 
 # "Envelope" is transparent blue to represent water
 /vis/geometry/set/colour logicPENShell 0 0 0 1 .3
-/vis/geometry/set/colour logicSArCrystal 0 0.2 0.2 1 .5
-/vis/geometry/set/colour logicSArBrick 0 0 0 1 .7
+/vis/geometry/set/colour logicContainerCrystal 0 0.3 0.3 0.6 .2
+/vis/geometry/set/colour logicContainerBrick 0 0.3 0.3 0.6 .5
+/vis/geometry/set/colour logicStringBoxCrystal 0 0.2 0.2 0.7 .9
+/vis/geometry/set/colour logicStringBoxBrick 0 0 0 1 .9
 /vis/geometry/set/colour logicSArContainer  0 0 0 1 .7
 /vis/geometry/set/colour logicPENShell 0 0 0 1 .3
 #/vis/geometry/set/colour logicReflector 0 0 1 1 .1
@@ -122,6 +130,7 @@
 /vis/geometry/set/colour logicBraid 0 1 1 0 1
 /vis/geometry/set/colour logicOuterJacket 0 0.5 0.5 0.5 1
 /vis/geometry/set/colour logicWireJacket 0 1 1 1 1
+/vis/geometry/set/colour logicASICPlate 0 0.5 1 0.5 1
 /vis/viewer/set/style surface
 /vis/viewer/set/hiddenMarker true
 /vis/viewer/set/viewpointThetaPhi 120 150
@@ -132,3 +141,4 @@
 #
 # For file-based drivers, use this to create an empty detector view:
 #/vis/viewer/flush
+/vis/ogl/set/displayListLimit 300000
