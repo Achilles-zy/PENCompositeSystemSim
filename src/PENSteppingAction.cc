@@ -77,8 +77,8 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 		PENEvent->DetectableTrue();
 	}
 
-	G4cout << aStep->GetPostStepPoint()->GetPosition() << G4endl;
-	for (int i = 0; i < 1; i++) {
+	//G4cout << aStep->GetPostStepPoint()->GetPosition() << G4endl;
+	for (int i = 0; i < 4; i++) {
 		if (volume == detectorConstruction->GetSiPM(i) && particle_name == "opticalphoton" && detectorConstruction->GetSiPM(i) != nullptr) {
 			aStep->GetTrack()->SetTrackStatus(fStopAndKill);
 			//G4cout << i << G4endl;
@@ -87,10 +87,12 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 			G4int GetCopyNumber0 = touchable->GetCopyNumber(0);
 			G4int GetCopyNumber1 = touchable->GetCopyNumber(1);
 			G4int GetCopyNumber2 = touchable->GetCopyNumber(2);
+			G4int GetCopyNumber3 = touchable->GetHistory()->GetTopReplicaNo();
 			G4cout << volume->GetName() << G4endl;
 			G4cout << "CopyNb0 =" << GetCopyNumber0 << G4endl;
 			G4cout << "CopyNb1 =" << GetCopyNumber1 << G4endl;
 			G4cout << "CopyNb2 =" << GetCopyNumber2 << G4endl;
+			G4cout << "CopyNb3 =" << GetCopyNumber3 << G4endl;
 			PENEvent->AddToSiPM(GetCopyNumber1, GetCopyNumber0);
 			PENEvent->CountTotalSiPMPhoton(1);
 		}

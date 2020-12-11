@@ -90,7 +90,7 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
       {
           //G4cout << SiPMPhotonCount[i][j] << " ";
           G4int NtupleColumnID = i * ColumnNb + j;
-          analysisManager->FillNtupleIColumn(1, NtupleColumnID, TotalSiPMPhotonCount);
+          //analysisManager->FillNtupleIColumn(1, NtupleColumnID, TotalSiPMPhotonCount);
           if (SiPMPhotonCount[i][j] >= PhotonCut_0) {
               SignalSiPMCount_0++;
           }

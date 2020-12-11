@@ -56,11 +56,16 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4LogicalVolume* ConstructA2(G4double WireLength);
         G4LogicalVolume* ConstructContainerBrick();
         G4LogicalVolume* ConstructStringBoxBrick();
+        G4LogicalVolume* ConstructStringBox();
         G4LogicalVolume* ConstructOuterReflector();//Outer Reflector of OuterShell
         G4LogicalVolume* ConstructInnerReflector();//Inner Reflector of OuterShell
         G4LogicalVolume* ConstructReflector();
-
         G4LogicalVolume* ConstructASICPlate();
+
+        G4LogicalVolume* ConstructSArSiPMArrayLV();
+        G4LogicalVolume* ConstructContainerSiPMArrayLV();
+        G4LogicalVolume* ConstructSiPMArrayLV();
+
         G4AssemblyVolume* ConstructSArSiPMArray();
         G4AssemblyVolume* ConstructContainerSiPMArray();
         G4AssemblyVolume* ConstructSiPMArray();
@@ -170,6 +175,7 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4LogicalVolume* logicStringBoxCrystal;
         G4LogicalVolume* logicContainerCrystal;
         G4LogicalVolume* logicASICPlate;
+        G4LogicalVolume* logicWire;
 
         PENMaterials* matconstructor;
 

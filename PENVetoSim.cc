@@ -73,7 +73,7 @@ int main(int argc, char** argv)
     G4UImanager* UImanager = G4UImanager::GetUIpointer();
     UImanager->ApplyCommand("/run/verbose 0");
     UImanager->ApplyCommand("/event/verbose 0");
-    UImanager->ApplyCommand("/tracking/verbose 1");
+    UImanager->ApplyCommand("/tracking/verbose 0");
     UImanager->ApplyCommand("/process/em/fluo true");
     UImanager->ApplyCommand("/process/em/auger true");
     UImanager->ApplyCommand("/process/em/augerCascade true");
