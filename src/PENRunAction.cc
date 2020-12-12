@@ -25,7 +25,7 @@ PENRunAction::PENRunAction(PENPrimaryGeneratorAction* gen, PENDetectorConstructi
 	ROIVetoEventCount(0),
 	ROIVetoPossibleEvtCount(0),
 	ifRefresh(false),
-	ifAccelerate(false),
+	ifAccelerate(true),
 	runID(0)
 {
   fRunMessenger = new PENRunMessenger(this);

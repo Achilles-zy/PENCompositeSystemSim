@@ -39,6 +39,7 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 	if (EnableAcc == true) {
 		if (PENEvent->GetAcceletateStatus() == false && TrackID % 200 == 0) {
 			SignalSiPMCount = 0;
+			ContainerSignalSiPMCount = 0;
 			G4int rownb = PENEvent->GetRowNb();
 			G4int columnnb = PENEvent->GetColumnNb();
 			for (int i = 0; i < rownb; i++)
@@ -50,7 +51,20 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 					}
 				}
 			}
-			if (SignalSiPMCount >= 2) {
+
+			G4int crownb = PENEvent->GetContainerRowNb();
+			G4int ccolumnnb = PENEvent->GetContainerColumnNb();
+			for (int i = 0; i < crownb; i++)
+			{
+				for (int j = 0; j < ccolumnnb; j++)
+				{
+					if (PENEvent->GetContainerSiPMSignalCount(i, j) > 0) {
+						ContainerSignalSiPMCount++;
+					}
+				}
+			}
+			G4int totalcnt = SignalSiPMCount + ContainerSignalSiPMCount;
+			if (totalcnt >= 2) {
 				PENEvent->SetAccelerate(true);
 			}
 		}
