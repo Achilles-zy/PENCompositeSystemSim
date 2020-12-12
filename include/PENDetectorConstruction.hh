@@ -157,6 +157,8 @@ class PENDetectorConstruction : public G4VUserDetectorConstruction
         G4VPhysicalVolume* physContainerSiPM1;
         G4VPhysicalVolume* physContainerSiPM2;
         G4VPhysicalVolume* physContainerSiPM3;
+        G4VPhysicalVolume* physContainerSiPM4;
+        G4VPhysicalVolume* physContainerSiPM5;
 
         G4VPhysicalVolume* physSiPMArray0;
         G4VPhysicalVolume* physSiPMArray1;
@@ -313,6 +315,9 @@ inline const G4VPhysicalVolume* PENDetectorConstruction::GetContainerSiPM(G4int 
         break;
     case 3:
         return physContainerSiPM3;
+        break;
+    case 4:
+        return physContainerSiPM4;
         break;
     default:
         break;

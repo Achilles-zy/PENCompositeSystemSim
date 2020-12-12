@@ -189,8 +189,7 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		}
 	}
 	else if (mode == "Array-1") {
-
-		if (SrcType == "SinglePENShell") {
+		if (SrcType == "SingleOuterShell") {
 			G4ThreeVector CentCoord;
 			G4double zCoord;
 			if (ImprintID % 2 == 0) {
@@ -218,12 +217,22 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius * 2);
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(CentCoord);
-			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("PENShell");
+			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("av_1_impr_" + std::to_string(ImprintID) + "_logicOuterShell_pv_0");
 		}
 
-		else if (SrcType == "PENShell") {
+		if (SrcType == "SingleInnerShell") {
+			G4ThreeVector CentCoord;
+			G4double zCoord;
+			if (ImprintID % 2 == 0) {
+				zCoord = -(ImprintID / 2 - 1) * 65 - 32.5;
+				CentCoord = G4ThreeVector(0, 0, zCoord * mm);
+			}
+			if (ImprintID % 2 == 1) {
+				zCoord = (ImprintID - 1) / 2 * 65 + 32.5;
+				CentCoord = G4ThreeVector(0, 0, zCoord * mm);
+			}
 			G4double Radius = fDetCons->GetPENShellRadius();
-			G4double Length = fDetCons->GetPENShellLength() * 20;
+			G4double Length = fDetCons->GetPENShellLength();
 
 			if (G4RunManager::GetRunManager()->GetRunManagerType() == 1) {
 				G4cout << "==========================Primary Info==========================" << G4endl;
@@ -236,13 +245,13 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 			fPENGPS->GetCurrentSource()->GetAngDist()->SetAngDistType("iso");
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisType("Volume");
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetPosDisShape("Cylinder");
-			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius * 2);
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetRadius(Radius);
 			fPENGPS->GetCurrentSource()->GetPosDist()->SetHalfZ(Length / 2);
-			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("PENShell");
+			fPENGPS->GetCurrentSource()->GetPosDist()->SetCentreCoords(CentCoord);
+			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("av_1_impr_" + std::to_string(ImprintID) + "_logicInnerShell_pv_1");
 		}
 
 		else if (SrcType == "StringBoxCrystal") {
-
 			G4double Radius = fDetCons->GetPENShellRadius();
 			G4double Length = fDetCons->GetPENShellLength() * 22;
 
@@ -262,7 +271,6 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 			fPENGPS->GetCurrentSource()->GetPosDist()->ConfineSourceToVolume("StringBoxCrystal");
 		}
 		else if (SrcType == "Wire") {
-
 		G4double Radius = fDetCons->GetWireRadius();
 		G4double Length = fDetCons->GetPENShellLength() * 22;
 		G4ThreeVector WirePos = fDetCons->GetWirePos();

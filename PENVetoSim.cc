@@ -16,6 +16,7 @@
 #include "G4RunManager.hh"
 #endif
 #include "G4UImanager.hh"
+#include "time.h"
 
 //#define G4VIS_USE
 //#define G4UI_USE

@@ -70,6 +70,11 @@ set(PENCompositeSystemSim_SCRIPTS
   vis.mac
   batch-SelfVeto.mac
   batch-InnerShellSurface.mac
+  batch-Reflector.mac
+  batch-StringBoxCrystal.mac
+  batch-SingleWire.mac
+  batch-SingleASIC.mac
+
   src1.mac
   )
 

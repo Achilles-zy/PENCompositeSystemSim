@@ -20,6 +20,7 @@ class PENSteppingAction : public G4UserSteppingAction
       ~PENSteppingAction() {};
 
     void UserSteppingAction(const G4Step*);
+    inline G4double GetEfficiency(G4double wavelength);
 
   private:
 
@@ -27,6 +28,7 @@ class PENSteppingAction : public G4UserSteppingAction
     PENRunAction* PENRun;
     G4int SignalSiPMCount;
     G4bool EnableAcc;
+
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

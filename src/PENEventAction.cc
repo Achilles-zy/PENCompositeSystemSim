@@ -16,6 +16,9 @@
 PENEventAction::PENEventAction(PENRunAction* runaction)
 	: edepBulk(0.),
     SiPMPhotonCount{ 0 },
+    SiPMSignalCount{ 0 },
+    ContainerSiPMPhotonCount{ 0 },
+    ContainerSiPMSignalCount{ 0 },
 	Total(0),
 	ID(0),
     EscapedPhotonCount(0),
@@ -27,11 +30,13 @@ PENEventAction::PENEventAction(PENRunAction* runaction)
     //ResultFile("Distribution_Results_NTuple.root","RECREATE"),
     //Distribution_Results("Distribution_Results","Distribution_Results")
 {
-    PhotonCut_0 = 2;
+    PhotonCut_0 = 1;
     PhotonCut_1 = 3;
-    PhotonCut_2 = 4;
-    PhotonCut_3 = 5;
+    PhotonCut_2 = 5;
+    PhotonCut_3 = 7;
     PhotonCut_4 = 10;
+    SignalSiPMCount = 0;
+    ContainerSignalSiPMCount = 0;
     SignalSiPMCount_0 = 0;
     SignalSiPMCount_1 = 0;
     SignalSiPMCount_2 = 0;
@@ -39,6 +44,8 @@ PENEventAction::PENEventAction(PENRunAction* runaction)
     SignalSiPMCount_4 = 0;
     RowNb = sizeof(SiPMPhotonCount) / sizeof(SiPMPhotonCount[0]);
     ColumnNb = sizeof(SiPMPhotonCount[0]) / sizeof(SiPMPhotonCount[0][0]);
+    ContainerRowNb = sizeof(ContainerSiPMPhotonCount) / sizeof(ContainerSiPMPhotonCount[0]);
+    ContainerColumnNb = sizeof(ContainerSiPMPhotonCount[0]) / sizeof(ContainerSiPMPhotonCount[0][0]);
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
  
@@ -54,8 +61,13 @@ void PENEventAction::BeginOfEventAction(const G4Event* evt)
 {
   edepBulk = 0;
   memset(SiPMPhotonCount, 0, sizeof(SiPMPhotonCount));
+  memset(ContainerSiPMPhotonCount, 0, sizeof(ContainerSiPMPhotonCount));
+  memset(SiPMSignalCount, 0, sizeof(SiPMPhotonCount));
+  memset(ContainerSiPMSignalCount, 0, sizeof(ContainerSiPMPhotonCount));
   Total = 0;
   TotalSiPMPhotonCount = 0;
+  SignalSiPMCount = 0;
+  ContainerSignalSiPMCount = 0;
   SignalSiPMCount_0 = 0;
   SignalSiPMCount_1 = 0;
   SignalSiPMCount_2 = 0;
@@ -88,7 +100,7 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
   {
       for (int j = 0; j < ColumnNb; j++)
       {
-          //G4cout << SiPMPhotonCount[i][j] << " ";
+          //G4cout << SiPMSignalCount[i][j] << " ";
           G4int NtupleColumnID = i * ColumnNb + j;
           //analysisManager->FillNtupleIColumn(1, NtupleColumnID, TotalSiPMPhotonCount);
           if (SiPMPhotonCount[i][j] >= PhotonCut_0) {
@@ -106,18 +118,42 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
           if (SiPMPhotonCount[i][j] >= PhotonCut_4) {
               SignalSiPMCount_4++;
           }
+          if (SiPMSignalCount[i][j] > 0) {
+              SignalSiPMCount++;
+          }
       }
       //G4cout<<G4endl;
   }
   //G4cout << "Matrix End" << G4endl;
 
+
+  for (int i = 0; i < ContainerRowNb; i++)
+  {
+      for (int j = 0; j < ContainerColumnNb; j++)
+      {
+          //G4cout << SiPMPhotonCount[i][j] << " ";
+          G4int NtupleColumnID = i * ContainerColumnNb + j;
+          //analysisManager->FillNtupleIColumn(1, NtupleColumnID, TotalSiPMPhotonCount);
+          if (ContainerSiPMSignalCount[i][j] > 0) {
+              ContainerSignalSiPMCount++;
+          }
+      }
+      //G4cout<<G4endl;
+  }
+
   analysisManager->FillNtupleIColumn(1, 0, TotalSiPMPhotonCount);
   analysisManager->AddNtupleRow(1);
   //G4cout << SiPMPhotonCount << G4endl;
 
+  G4int TotalSignalSiPMCount = ContainerSignalSiPMCount + SignalSiPMCount;
+  if (edepBulk > 0 && TotalSignalSiPMCount >= MinSignalSiPMCount) {
+      //G4cout << "SignalSiPMCount0Ture" << G4endl;
+      run->CountVetoEvent();
+  }
+
 	if (edepBulk > 0 && SignalSiPMCount_0 >= MinSignalSiPMCount) {
         //G4cout << "SignalSiPMCount0Ture" << G4endl;
-		run->CountVetoEvent();
+		run->CountVetoEvent_0();
     }
     if (edepBulk > 0 && SignalSiPMCount_1 >= MinSignalSiPMCount) {
         //G4cout << "SignalSiPMCount1Ture" << G4endl;
@@ -142,7 +178,7 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
         analysisManager->FillH1(3, TotalSiPMPhotonCount);
 	}
 
-	if (TotalSiPMPhotonCount > 0) {
+	if (TotalSignalSiPMCount > 0) {
 		run->CountSiPMEvent();
 	}
 
@@ -157,7 +193,7 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
     if (edepBulk > 2000 * keV && edepBulk < 2100 * keV) {
         run->CountROIEvent();
 
-        if (SignalSiPMCount_1 >= MinSignalSiPMCount) {
+        if (TotalSignalSiPMCount >= MinSignalSiPMCount) {
             run->CountROIVetoEvent();
         }
 
@@ -173,7 +209,6 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
     }
 
   ID++;
-
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -186,4 +221,17 @@ void PENEventAction::AddBulkEnergy(G4double de)
 void PENEventAction::AddToSiPM(G4int i,G4int j){
   Total++;
   SiPMPhotonCount[i][j]++;
+}
+
+void PENEventAction::AddToSiPMSignal(G4int i, G4int j) {
+    SiPMSignalCount[i][j]++;
+}
+
+void PENEventAction::AddToContainerSiPM(G4int i, G4int j) {
+    Total++;
+    ContainerSiPMPhotonCount[i][j]++;
+}
+
+void PENEventAction::AddToContainerSiPMSignal(G4int i, G4int j) {
+    ContainerSiPMSignalCount[i][j]++;
 }

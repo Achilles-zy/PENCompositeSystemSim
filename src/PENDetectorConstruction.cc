@@ -72,6 +72,8 @@ PENDetectorConstruction::PENDetectorConstruction() :
 	physContainerSiPM1(nullptr),
 	physContainerSiPM2(nullptr),
 	physContainerSiPM3(nullptr),
+	physContainerSiPM4(nullptr),
+	physContainerSiPM5(nullptr),
 	physSiPMArray0(nullptr),
 	physSiPMArray1(nullptr),
 	physSiPMArray2(nullptr),
@@ -99,7 +101,8 @@ PENDetectorConstruction::PENDetectorConstruction() :
 	fABSFile = "PEN_ABS";
 	fConfine = "PENShell";
 	fWireType = "A1";
-	fReflectorType = "PolishedESR_LUT";
+	fReflectorType = "polishedlumirrorair";
+	//fReflectorType = "PolisherESR_LUT";
 	fMode = "Array-1";
 	fWirePos = G4ThreeVector();
 	fWireRadius = 0.7 * mm;
@@ -152,6 +155,7 @@ G4VPhysicalVolume* PENDetectorConstruction::GetPhysicalVolumeByName(const G4Stri
 		G4String VolumeName = pv->GetName();
 		G4double VolumeMass = pv->GetLogicalVolume()->GetMass();
 	}
+	G4cout << "PV" << name << " not found!" << G4endl;
 	return NULL;
 }
 
@@ -810,20 +814,50 @@ G4LogicalVolume* PENDetectorConstruction::ConstructA2(G4double WireLength) {
 }
 
 G4LogicalVolume* PENDetectorConstruction::ConstructPENShell() {
+	G4double ISOuterRadius = 44 * mm;
+	G4double ISOuterHeight = 49 * mm;
+	G4double ISChamfer = 3 * mm;
+	G4double asmallvalue = 0.01 * mm;
+	auto ISTorus = new G4Torus("ISTorus", 0., ISChamfer, ISOuterRadius - ISChamfer, 0., twopi);
+	auto ISInnerTop = new G4Tubs("ISInnerTop", 0., ISOuterRadius - ISChamfer, ISChamfer, 0., twopi);
+	auto ISTop = new G4UnionSolid("GeInTemp1", ISInnerTop, ISTorus);
+	auto ISCylinder = new G4Tubs("solidInnerShell", 0., ISOuterRadius, ISOuterHeight / 2 - ISChamfer, 0., twopi);
+
+	//auto solidInnerShellSolid = new G4MultiUnion("solidInnerShellSolid");
+	G4ThreeVector ISpos0 = G4ThreeVector();
+	G4ThreeVector ISpos1 = G4ThreeVector(0., 0., ISOuterHeight / 2 - ISChamfer + asmallvalue);
+	G4ThreeVector ISpos2 = G4ThreeVector(0., 0., -ISOuterHeight / 2 + ISChamfer - asmallvalue);
+	G4RotationMatrix ISrot1 = G4RotationMatrix();
+	G4Transform3D IStr0 = G4Transform3D(ISrot1, ISpos0);
+	G4Transform3D IStr1 = G4Transform3D(ISrot1, ISpos1);
+	G4Transform3D IStr2 = G4Transform3D(ISrot1, ISpos2);
+
+	auto Temp1 = new G4UnionSolid("Temp1", ISCylinder, ISTop, IStr1);
+	auto solidInnerShellSolid = new G4UnionSolid("solidInnerShellSolid", Temp1, ISTop, IStr2);
+
+	//solidInnerShellSolid->AddNode(*ISCylinder, IStr0);
+	//solidInnerShellSolid->AddNode(*ISTop, IStr1);
+	//solidInnerShellSolid->AddNode(*ISTop, IStr2);
+	//solidInnerShellSolid->Voxelize();
+
+	G4ThreeVector pos1 = G4ThreeVector(0., 0., 0.);
+	G4RotationMatrix* rot1 = new G4RotationMatrix();
+	//rot1->rotateX(90 * degree);
+	G4Transform3D OSTr0 = G4Transform3D(*rot1, pos1);
+
 	G4String Ver = "IV";
-	auto innermesh = CADMesh::TessellatedMesh::FromSTL("../models/InnerShell-" + Ver + ".stl");
 	auto outermesh = CADMesh::TessellatedMesh::FromSTL("../models/OuterShell-" + Ver + ".stl");
-	G4VSolid* solidInnerShell = innermesh->GetSolid();
 	G4VSolid* solidOuterShell = outermesh->GetSolid();
-	//auto solidInnerShell = new G4Tubs("solidInnerShell", 0., 44.5 * mm, 25 * mm, 0., twopi);
-	G4ThreeVector position1 = G4ThreeVector(0., 0., 0.);
-	auto solidPENShell = new G4UnionSolid("solidPENShell", solidInnerShell, solidOuterShell, 0, position1);
+	//auto innermesh = CADMesh::TessellatedMesh::FromSTL("../models/InnerShellSolid-" + Ver + ".stl");
+	//G4VSolid* solidInnerShellSolid = innermesh->GetSolid();
+
+	//auto solidInnerShellVoid = new G4Tubs("solidInnerShell", 0., 40.1 * mm, 20.1 * mm, 0., twopi);
+	//auto solidInnerShell = new G4SubtractionSolid("solidPENShell", solidInnerShellSolid, solidInnerShellVoid, 0, G4ThreeVector());
+
+	auto solidPENShell = new G4UnionSolid("solidPENShell", solidInnerShellSolid, solidOuterShell, rot1, pos1);
 
 	auto logicPENShell = new G4LogicalVolume(solidPENShell, matPEN, "logicPENShell");
-	auto logicOuterShell = new G4LogicalVolume(solidOuterShell, matPEN, "logicOuterShell");
-	auto logicInnerShell = new G4LogicalVolume(solidInnerShell, matPEN, "logicInnerShell");
-	//physInnerShell = new G4PVPlacement(0, G4ThreeVector(0, 0, 0), logicInnerShell, "InnerShell", logicPENShell, false, 0, CheckOverlaps);
-	//physOuterShell = new G4PVPlacement(0, G4ThreeVector(0, 0, 0), logicOuterShell, "OuterShell", logicPENShell, false, 0, CheckOverlaps);
+
 	return logicPENShell;
 }
 
@@ -985,7 +1019,7 @@ G4LogicalVolume* PENDetectorConstruction::ConstructCSGInnerShell() {
 	auto solidInnerShellVoid = new G4Tubs("solidInnerShell", 0., 40.5 * mm, 20.5 * mm, 0., twopi);
 	auto solidInnerShell = new G4SubtractionSolid("solidPENShell", solidInnerShellSolid, solidInnerShellVoid, 0, G4ThreeVector());
 
-	auto logicInnerShell = new G4LogicalVolume(solidInnerShellSolid, matPEN, "logicPENShell");
+	auto logicInnerShell = new G4LogicalVolume(solidInnerShellSolid, matPEN, "logicInnerShell");
 	return logicInnerShell;
 }
 
@@ -994,7 +1028,7 @@ G4LogicalVolume* PENDetectorConstruction::ConstructOuterShell() {
 	auto outermesh = CADMesh::TessellatedMesh::FromSTL("../models/OuterShell-" + Ver + ".stl");
 	G4VSolid* solidOuterShell = outermesh->GetSolid();
 
-	auto logicOuterShell = new G4LogicalVolume(solidOuterShell, matPEN, "logicPENShell");
+	auto logicOuterShell = new G4LogicalVolume(solidOuterShell, matPEN, "logicOuterShell");
 	return logicOuterShell;
 }
 
@@ -1401,16 +1435,16 @@ G4LogicalVolume* PENDetectorConstruction::ConstructContainerSiPMArrayLV() {
 	G4double SiPMLength = 1.5 * cm;
 
 	G4Box* solidSiPM = new G4Box("solidSiPM", SiPMWidth / 2, SiPMLength / 2, SiPMThickness / 2);
-	G4LogicalVolume* logicSiPM = new G4LogicalVolume(solidSiPM, matSi, "logicSiPM");
+	G4LogicalVolume* logicContainerSiPM = new G4LogicalVolume(solidSiPM, matSi, "logicSiPM");
 	G4Box* solidTPB = new G4Box("solidTPB", SiPMWidth / 2, SiPMLength / 2, TPBThickness / 2);
 	G4LogicalVolume* logicTPB = new G4LogicalVolume(solidTPB, matTPB, "logicTPB");
 	G4double offset1 = SiPMWidth / 2 + 0.3 * mm;
 	G4double offset2 = SiPMLength / 2 + 0.3 * mm;
 
-	physSiPM0 = new G4PVPlacement(0, G4ThreeVector(offset1, offset2, 0), logicSiPM, "physSiPM0", logicContainerSiPMArray, false, 0, CheckOverlaps);
-	physSiPM1 = new G4PVPlacement(0, G4ThreeVector(-offset1, offset2, 0), logicSiPM, "physSiPM1", logicContainerSiPMArray, false, 1, CheckOverlaps);
-	physSiPM2 = new G4PVPlacement(0, G4ThreeVector(offset1, -offset2, 0), logicSiPM, "physSiPM2", logicContainerSiPMArray, false, 2, CheckOverlaps);
-	physSiPM3 = new G4PVPlacement(0, G4ThreeVector(-offset1, -offset2, 0), logicSiPM, "physSiPM3", logicContainerSiPMArray, false, 3, CheckOverlaps);
+	physContainerSiPM0 = new G4PVPlacement(0, G4ThreeVector(offset1, offset2, 0), logicContainerSiPM, "physSiPM0", logicContainerSiPMArray, false, 0, CheckOverlaps);
+	physContainerSiPM1 = new G4PVPlacement(0, G4ThreeVector(-offset1, offset2, 0), logicContainerSiPM, "physSiPM1", logicContainerSiPMArray, false, 1, CheckOverlaps);
+	physContainerSiPM2 = new G4PVPlacement(0, G4ThreeVector(offset1, -offset2, 0), logicContainerSiPM, "physSiPM2", logicContainerSiPMArray, false, 2, CheckOverlaps);
+	physContainerSiPM3 = new G4PVPlacement(0, G4ThreeVector(-offset1, -offset2, 0), logicContainerSiPM, "physSiPM3", logicContainerSiPMArray, false, 3, CheckOverlaps);
 
 	auto physTPB0 = new G4PVPlacement(0, G4ThreeVector(offset1, offset2, SiPMThickness / 2 + TPBThickness / 2), logicTPB, "physTPB0", logicContainerSiPMArray, false, 0, CheckOverlaps);
 	auto physTPB1 = new G4PVPlacement(0, G4ThreeVector(-offset1, offset2, SiPMThickness / 2 + TPBThickness / 2), logicTPB, "physTPB1", logicContainerSiPMArray, false, 1, CheckOverlaps);
@@ -1457,7 +1491,7 @@ G4LogicalVolume* PENDetectorConstruction::ConstructContainerSiPMArrayLV() {
 	SAr_SAr->SetModel(unified);
 	SAr_SAr->SetFinish(polished);
 
-	G4LogicalSkinSurface* SiPM_LSS = new G4LogicalSkinSurface("SiPM_LSS", logicSiPM, SiPM_SAr);
+	G4LogicalSkinSurface* SiPM_LSS = new G4LogicalSkinSurface("SiPM_LSS", logicContainerSiPM, SiPM_SAr);
 	G4LogicalSkinSurface* TPB_LSS = new G4LogicalSkinSurface("TPB_LSS", logicTPB, TPB_SAr);
 	G4LogicalSkinSurface* SiOMArray_LSS = new G4LogicalSkinSurface("SiOMArray_LSS", logicContainerSiPMArray, SAr_SAr);
 
@@ -2003,34 +2037,36 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	//                           PENShell                          //
 	//=============================================================//
 
-	auto rotInnerPENShell = new G4RotationMatrix();
-	rotInnerPENShell->rotateX(90 * degree);
-	auto rotOuterPENShell = new G4RotationMatrix();
+	//G4LogicalVolume* logicPENShell = ConstructPENShell();
+
+	//G4double OSConeHeight0 = 37.313 * mm;
+	//G4ThreeVector PENShellPlacement = G4ThreeVector(0, 0, 0);
+	//auto rotInnerPENShell = new G4RotationMatrix();
+	//rotInnerPENShell->rotateX(90 * degree);
+	//auto rotOuterPENShell = new G4RotationMatrix();
 
 	//G4ThreeVector PENShellPlacement =G4ThreeVector(0, 0, 34.1 * mm);
-	G4double OSConeHeight0 = 37.313 * mm;
-	G4ThreeVector PENShellPlacement = G4ThreeVector(0, 0, 0);
-	G4ThreeVector PENShellPlacement1 = G4ThreeVector(0, 0, OSConeHeight0 / 2);
+
+	//G4ThreeVector PENShellPlacement1 = G4ThreeVector(0, 0, OSConeHeight0 / 2);
 	//G4LogicalVolume* logicPENShell = ConstructCSGPENShell();
 	//physPENShell = new G4PVPlacement(rotPENShell, PENShellPlacement, logicPENShell, "PENShell", logicEnv, false, 0, checkOverlaps);
-
 	G4LogicalVolume* logicOuterShell = ConstructOuterShell();
-
 	G4LogicalVolume* logicInnerShell = ConstructCSGInnerShell();
 
-	G4String Ver = "IV";
-	auto solidVirtualUnitBoxmesh = CADMesh::TessellatedMesh::FromSTL("../models/VirtualUnitBox-" + Ver + ".stl");
-	G4VSolid* solidVirtualUnitBox = solidVirtualUnitBoxmesh->GetSolid();
-	G4LogicalVolume* logicVirtualUnitBox = new G4LogicalVolume(solidVirtualUnitBox, matLAr, "logicVirtualUnitBox");
+	//G4String Ver = "IV";
+	//auto solidVirtualUnitBoxmesh = CADMesh::TessellatedMesh::FromSTL("../models/VirtualUnitBox-" + Ver + ".stl");
+	//G4VSolid* solidVirtualUnitBox = solidVirtualUnitBoxmesh->GetSolid();
+	//G4LogicalVolume* logicVirtualUnitBox = new G4LogicalVolume(solidVirtualUnitBox, matLAr, "logicVirtualUnitBox");
 
-	physOuterShell = new G4PVPlacement(rotOuterPENShell, PENShellPlacement, logicOuterShell, "PENShell", logicVirtualUnitBox, false, 0, checkOverlaps);
-	physInnerShell = new G4PVPlacement(rotInnerPENShell, PENShellPlacement, logicInnerShell, "PENShell", logicVirtualUnitBox, false, 0, checkOverlaps);
+	//physOuterShell = new G4PVPlacement(rotOuterPENShell, PENShellPlacement, logicOuterShell, "PENShell", logicVirtualUnitBox, false, 0, checkOverlaps);
+	//physInnerShell = new G4PVPlacement(rotInnerPENShell, PENShellPlacement, logicInnerShell, "PENShell", logicVirtualUnitBox, false, 0, checkOverlaps);
 
 	//=============================================================//
 	//                             BEGe                            //
 	//=============================================================//
 	auto rotBEGe = new G4RotationMatrix();
 	G4LogicalVolume* logicTotalCrystal = ConstructBEGe();
+	//auto physDet = new G4PVPlacement(rotBEGe, G4ThreeVector(0, 0, -1 * mm), logicTotalCrystal, "PhysDet", logicInnerShell, false, 0, checkOverlaps);
 	auto physDet = new G4PVPlacement(rotBEGe, G4ThreeVector(0, 0, -1 * mm), logicTotalCrystal, "PhysDet", logicInnerShell, false, 0, checkOverlaps);
 
 	//=============================================================//
@@ -2040,8 +2076,8 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	//G4AssemblyVolume* logicSArSiPMArray = ConstructSArSiPMArray();
 	G4LogicalVolume* logicSArSiPMArray = ConstructSArSiPMArrayLV();
 
-	auto rotSiPM0 = new G4RotationMatrix();
-	rotSiPM0->rotateX(90 * degree);
+	//auto rotSiPM0 = new G4RotationMatrix();
+	//rotSiPM0->rotateX(90 * degree);
 
 	//physSiPMArray0 = new G4PVPlacement(rotSiPM0, G4ThreeVector(-166 * mm, 0, 0 * mm), logicSiPMArray, "SiPMArray0", logicStringBoxCrystal, false, 0, checkOverlaps);
 	//physSiPMArray1 = new G4PVPlacement(rotSiPM0, G4ThreeVector(166 * mm, 0, 0 * mm), logicSiPMArray, "SiPMArray1", logicStringBoxCrystal, false, 1, checkOverlaps);
@@ -2061,10 +2097,15 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	G4ThreeVector PosOuterShell = G4ThreeVector(0, 0, 0);
 	G4Transform3D TrOuterShell = G4Transform3D(*RotOuterShell, PosOuterShell);
 
-	G4RotationMatrix* RotVirtualBox = new G4RotationMatrix();
-	RotVirtualBox->rotateX(-90 * degree);
-	G4ThreeVector PosVirtualBox = G4ThreeVector(0, 0, 0);
-	G4Transform3D TrVirtualBox = G4Transform3D(*RotVirtualBox, PosVirtualBox);
+	//G4RotationMatrix* RotVirtualBox = new G4RotationMatrix();
+	//RotVirtualBox->rotateX(-90 * degree);
+	//G4ThreeVector PosVirtualBox = G4ThreeVector(0, 0, 0);
+	//G4Transform3D TrVirtualBox = G4Transform3D(*RotVirtualBox, PosVirtualBox);
+
+	G4RotationMatrix* RotPENShell = new G4RotationMatrix();
+	RotPENShell->rotateX(90 * degree);
+	G4ThreeVector PosPENShell = G4ThreeVector(0, 0, 0);
+	G4Transform3D TrPENShell = G4Transform3D(*RotPENShell, PosPENShell);
 
 	G4RotationMatrix* RotSArSiPM = new G4RotationMatrix();
 	RotSArSiPM->rotateY(90 * degree);
@@ -2078,11 +2119,14 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	G4Transform3D TrPosSArSiPM2 = G4Transform3D(*RotSArSiPM, PosSArSiPM2);
 	G4Transform3D TrPosSArSiPM3 = G4Transform3D(*RotSArSiPM, PosSArSiPM3);
 
-	logicUnit->AddPlacedVolume(logicVirtualUnitBox, TrVirtualBox);
+	//logicUnit->AddPlacedVolume(logicVirtualUnitBox, TrVirtualBox);
 	//logicUnit->AddPlacedAssembly(logicSArSiPMArray, TrPosSArSiPM0);
 	//logicUnit->AddPlacedAssembly(logicSArSiPMArray, TrPosSArSiPM1);
 	//logicUnit->AddPlacedAssembly(logicSArSiPMArray, TrPosSArSiPM2);
 	//logicUnit->AddPlacedAssembly(logicSArSiPMArray, TrPosSArSiPM3);
+	//logicUnit->AddPlacedVolume(logicPENShell, TrPENShell);
+	logicUnit->AddPlacedVolume(logicOuterShell, TrOuterShell);
+	logicUnit->AddPlacedVolume(logicInnerShell, TrInnerShell);
 	logicUnit->AddPlacedVolume(logicSArSiPMArray, TrPosSArSiPM0);
 	logicUnit->AddPlacedVolume(logicSArSiPMArray, TrPosSArSiPM1);
 	logicUnit->AddPlacedVolume(logicSArSiPMArray, TrPosSArSiPM2);
@@ -2098,13 +2142,6 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 		G4Transform3D TrUnit2 = G4Transform3D(*RotUnit, PosUnit2);
 		logicUnit->MakeImprint(logicStringBoxCrystal, TrUnit1);
 		logicUnit->MakeImprint(logicStringBoxCrystal, TrUnit2);
-
-		//G4ThreeVector PosUnit1 = G4ThreeVector(0, 0, (32.5 + 65 * i) * mm);
-		//G4ThreeVector PosUnit2 = G4ThreeVector(0, 0, (-32.5 - 65 * i) * mm);
-		//G4Transform3D TrUnit1 = G4Transform3D(*RotUnit, PosUnit1);
-		//G4Transform3D TrUnit2 = G4Transform3D(*RotUnit, PosUnit2);
-		//logicUnit->MakeImprint(logicEnv, TrUnit1);
-		//logicUnit->MakeImprint(logicEnv, TrUnit2);
 	}
 	
 
@@ -2144,7 +2181,7 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	auto RotContainerSiPM = new G4RotationMatrix();
 	RotContainerSiPM->rotateX(-90 * degree);
 
-	G4AssemblyVolume* logicContainerSiPMArray = ConstructContainerSiPMArray();
+	G4LogicalVolume* logicContainerSiPMArray = ConstructContainerSiPMArrayLV();
 	G4Transform3D TrSArUnitSiPMUp0 = G4Transform3D(*RotContainerSiPM, SArUnitSiPMPosUp0);
 	G4Transform3D TrSArUnitSiPMUp1 = G4Transform3D(*RotContainerSiPM, SArUnitSiPMPosUp1);
 	G4Transform3D TrSArUnitSiPMUp2 = G4Transform3D(*RotContainerSiPM, SArUnitSiPMPosUp2);
@@ -2161,21 +2198,37 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	G4Transform3D TrSArUnitSiPMDown5 = G4Transform3D(*RotContainerSiPM, SArUnitSiPMPosDown5);
 	G4Transform3D TrSArUnitSiPMDown6 = G4Transform3D(*RotContainerSiPM, SArUnitSiPMPosDown6);
 
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp0);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp1);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp2);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp3);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp4);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp5);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp6);
+	auto physContainerSiPMArrayUp0 = new G4PVPlacement(TrSArUnitSiPMUp0, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayUp1 = new G4PVPlacement(TrSArUnitSiPMUp1, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayUp2 = new G4PVPlacement(TrSArUnitSiPMUp2, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayUp3 = new G4PVPlacement(TrSArUnitSiPMUp3, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayUp4 = new G4PVPlacement(TrSArUnitSiPMUp4, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayUp5 = new G4PVPlacement(TrSArUnitSiPMUp5, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayUp6 = new G4PVPlacement(TrSArUnitSiPMUp6, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
 
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown0);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown1);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown2);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown3);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown4);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown5);
-	logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown6);
+	auto physContainerSiPMArrayDown0 = new G4PVPlacement(TrSArUnitSiPMDown0, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayDown1 = new G4PVPlacement(TrSArUnitSiPMDown1, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayDown2 = new G4PVPlacement(TrSArUnitSiPMDown2, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayDown3 = new G4PVPlacement(TrSArUnitSiPMDown3, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayDown4 = new G4PVPlacement(TrSArUnitSiPMDown4, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayDown5 = new G4PVPlacement(TrSArUnitSiPMDown5, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+	auto physContainerSiPMArrayDown6 = new G4PVPlacement(TrSArUnitSiPMDown6, logicContainerSiPMArray, "ContainerSiPMArray", logicContainerCrystal, false, 0, checkOverlaps);
+
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp0);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp1);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp2);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp3);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp4);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp5);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMUp6);
+
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown0);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown1);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown2);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown3);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown4);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown5);
+	//logicContainerSiPMArray->MakeImprint(logicContainerCrystal, TrSArUnitSiPMDown6);
 
 	//========================PEN shell and wire paremeters========================//
 
@@ -2204,6 +2257,7 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 		WirePlacement = G4ThreeVector(0, fWireCentDist,  0);
 		fWirePos = WirePlacement;
 		physWire = new G4PVPlacement(0, WirePlacement, logicWire, "Wire", logicInnerShell, false, 0, checkOverlaps);
+		//physWire = new G4PVPlacement(0, WirePlacement, logicWire, "Wire", logicInnerShell, false, 0, checkOverlaps);
 	}
 	else if (WireType == "A2") {
 		G4double WireRadius = 1 * mm / 2;
@@ -2218,7 +2272,6 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 		G4cout << "Type does not exist!" << G4endl;
 	}
 
-
 	//=============================================================//
 	//                         ASIC Plate                          //
 	//=============================================================//
@@ -2229,8 +2282,8 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	G4ThreeVector ASICPlacement = G4ThreeVector(0, 0, -fBEGeHeight / 2 - ShellThickness + fASICThickness / 2);
 
 	logicASICPlate = ConstructASICPlate();
+	//physASICPlate = new G4PVPlacement(0, ASICPlacement, logicASICPlate, "ASIC", logicInnerShell, false, 0, checkOverlaps);
 	physASICPlate = new G4PVPlacement(0, ASICPlacement, logicASICPlate, "ASIC", logicInnerShell, false, 0, checkOverlaps);
-
 	//=============================================================//
 	//                        Optical Surfaces                     //
 	//=============================================================//
@@ -2399,19 +2452,32 @@ G4VPhysicalVolume* PENDetectorConstruction::ConstructArray_1() {
 	ASIC_Skin->SetModel(unified);
 	ASIC_Skin->SetFinish(polished);
 
-	G4LogicalSkinSurface* VirtualBox_LSS = new G4LogicalSkinSurface("VirtualBox_LSS", logicVirtualUnitBox, SAr_SAr);
+	//G4LogicalSkinSurface* VirtualBox_LSS = new G4LogicalSkinSurface("VirtualBox_LSS", logicVirtualUnitBox, SAr_SAr);
 	G4LogicalSkinSurface* Box_LN2_LSS = new G4LogicalSkinSurface("Box_LN2_LSS", logicStringBoxBrick, PEN_LN2_Ref);
 	G4LogicalSkinSurface* Ge_LSS = new G4LogicalSkinSurface("Ge_LSS", logicTotalCrystal, Ge_Skin);
 	G4LogicalSkinSurface* ASIC_LSS = new G4LogicalSkinSurface("ASIC_LSS", logicASICPlate, ASIC_Skin);
 	G4LogicalSkinSurface* Wire_LSS = new G4LogicalSkinSurface("Wire_LSS", logicWire, Wire_Skin);
 
-	G4LogicalBorderSurface* Ge_PEN_LBS = new G4LogicalBorderSurface("Ge_PEN_LBS", physInnerShell, physDet, Ge_PEN);
-	G4LogicalBorderSurface* Ge_SAr_LBS = new G4LogicalBorderSurface("Ge_SAr_LBS", physStringBoxCrystal, physDet, Ge_SAr);
+	//G4LogicalBorderSurface* Ge_PEN_LBS = new G4LogicalBorderSurface("Ge_PEN_LBS", physInnerShell, physDet, Ge_PEN);
+	//G4LogicalBorderSurface* Ge_SAr_LBS = new G4LogicalBorderSurface("Ge_SAr_LBS", physStringBoxCrystal, physDet, Ge_SAr);
 
 	G4LogicalBorderSurface* Box_SAr_LBS = new G4LogicalBorderSurface("Box_SAr_LBS", physStringBoxCrystal, physStringBoxBrick, PEN_SAr_Ref);
+	//for (int i = 1; i <= 18; i++) {
+	//	G4String PVName = "av_1_impr_" + std::to_string(i) + "_logicVirtualUnitBox_pv_0";
+	//	G4String InnerShellLBSName = "InnerShell_SAr_LBS";
+	//	new G4LogicalBorderSurface("InnerShell_SAr_LBS", GetPhysicalVolumeByName(PVName), physInnerShell, PEN_SAr_Ref);
+	//	new G4LogicalBorderSurface("OuterShell_SAr_LBS", GetPhysicalVolumeByName(PVName), physOuterShell, PEN_SAr);
+	//}
+	for (int i = 1; i <= 18; i++) {
+		G4String PVName0 = "av_1_impr_" + std::to_string(i) + "_logicOuterShell_pv_0";
+		G4String PVName1 = "av_1_impr_" + std::to_string(i) + "_logicInnerShell_pv_1";
+		G4String InnerShellLBSName = "InnerShell_SAr_LBS";
+		new G4LogicalBorderSurface("OuterShell_SAr_LBS", physStringBoxCrystal, GetPhysicalVolumeByName(PVName0),PEN_SAr_Ref);
+		new G4LogicalBorderSurface("InnerShell_SAr_LBS", physStringBoxCrystal, GetPhysicalVolumeByName(PVName1), PEN_SAr);
+	}
 	G4LogicalBorderSurface* InnerShell_SAr_LBS = new G4LogicalBorderSurface("InnerShell_SAr_LBS", physStringBoxCrystal, physInnerShell,  PEN_SAr_Ref);
 	G4LogicalBorderSurface* OuterShell_SAr_LBS = new G4LogicalBorderSurface("OuterShell_SAr_LBS", physStringBoxCrystal, physOuterShell, PEN_SAr_Ref);
-	//GetPhysicalVolumeByName("");
+
 	GetPhysicalVolumeProperties();
 	return physWorld;
 }

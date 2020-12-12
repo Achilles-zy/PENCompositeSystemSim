@@ -14,6 +14,7 @@ PENRunAction::PENRunAction(PENPrimaryGeneratorAction* gen, PENDetectorConstructi
 	SiPMEventCount(0),
 	BulkEventCount(0),
 	VetoEventCount(0),
+	VetoEventCount_0(0),
 	VetoEventCount_1(0),
 	VetoEventCount_2(0),
 	VetoEventCount_3(0),
@@ -66,6 +67,7 @@ PENRunAction::PENRunAction(PENPrimaryGeneratorAction* gen, PENDetectorConstructi
   G4AccumulableManager* accumulableManager = G4AccumulableManager::Instance();
   accumulableManager->RegisterAccumulable(SiPMEventCount);
   accumulableManager->RegisterAccumulable(VetoEventCount);
+  accumulableManager->RegisterAccumulable(VetoEventCount_0);
   accumulableManager->RegisterAccumulable(VetoEventCount_1);
   accumulableManager->RegisterAccumulable(VetoEventCount_2);
   accumulableManager->RegisterAccumulable(VetoEventCount_3);
@@ -311,6 +313,7 @@ void PENRunAction::CDEXArrayOutput(const G4Run* aRun) {
 		G4cout << G4endl;
 		G4cout << G4endl;
 		G4cout << "VetoEventCount =" << VetoEventCount.GetValue() << G4endl;
+		G4cout << "VetoEventCount_0 =" << VetoEventCount_0.GetValue() << G4endl;
 		G4cout << "VetoEventCount_1 =" << VetoEventCount_1.GetValue() << G4endl;
 		G4cout << "VetoEventCount_2 =" << VetoEventCount_2.GetValue() << G4endl;
 		G4cout << "VetoEventCount_3 =" << VetoEventCount_3.GetValue() << G4endl;
@@ -373,6 +376,7 @@ void PENRunAction::CDEXArrayOutput(const G4Run* aRun) {
 				<< std::setw(40) << std::left << "Primary Energy(MeV)" << '\t'
 				<< std::setw(40) << std::left << "SiPMEvent" << '\t'
 				<< std::setw(40) << std::left << "VetoEvent" << '\t'
+				<< std::setw(40) << std::left << "VetoEvent_0" << '\t'
 				<< std::setw(40) << std::left << "VetoEvent_1" << '\t'
 				<< std::setw(40) << std::left << "VetoEvent_2" << '\t'
 				<< std::setw(40) << std::left << "VetoEvent_3" << '\t'
@@ -394,6 +398,7 @@ void PENRunAction::CDEXArrayOutput(const G4Run* aRun) {
 			<< std::setw(40) << std::left << std::setiosflags(std::ios::fixed) << std::setprecision(2) << fPrimaryGenerator->GetPrimaryE() << '\t'
 			<< std::setw(40) << std::left << SiPMEventCount.GetValue() << '\t'
 			<< std::setw(40) << std::left << VetoEventCount.GetValue() << '\t'
+			<< std::setw(40) << std::left << VetoEventCount_0.GetValue() << '\t'
 			<< std::setw(40) << std::left << VetoEventCount_1.GetValue() << '\t'
 			<< std::setw(40) << std::left << VetoEventCount_2.GetValue() << '\t'
 			<< std::setw(40) << std::left << VetoEventCount_3.GetValue() << '\t'

@@ -15,6 +15,7 @@
 #include "G4RunManager.hh"
 #include "G4HadronicProcessType.hh"
 #include "G4EmProcessSubType.hh"
+#include "G4SystemOfUnits.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -33,10 +34,10 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 	auto particle_name = aStep->GetTrack()->GetParticleDefinition()->GetParticleName();
 
 	auto edep = aStep->GetTotalEnergyDeposit();
-
+	G4int TrackID = aStep->GetTrack()->GetTrackID();
 	//**********************For Acceleration**********************//
 	if (EnableAcc == true) {
-		if (PENEvent->GetAcceletateStatus() == false) {
+		if (PENEvent->GetAcceletateStatus() == false && TrackID % 200 == 0) {
 			SignalSiPMCount = 0;
 			G4int rownb = PENEvent->GetRowNb();
 			G4int columnnb = PENEvent->GetColumnNb();
@@ -44,7 +45,7 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 			{
 				for (int j = 0; j < columnnb; j++)
 				{
-					if (PENEvent->GetSiPMPhotonCount(i, j) > 3) {
+					if (PENEvent->GetSiPMSignalCount(i, j) > 0) {
 						SignalSiPMCount++;
 					}
 				}
@@ -78,22 +79,38 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 	}
 
 	//G4cout << aStep->GetPostStepPoint()->GetPosition() << G4endl;
-	for (int i = 0; i < 4; i++) {
-		if (volume == detectorConstruction->GetSiPM(i) && particle_name == "opticalphoton" && detectorConstruction->GetSiPM(i) != nullptr) {
+	for (int i = 0; i < 5; i++) {
+		if (volume == detectorConstruction->GetSiPM(i) && detectorConstruction->GetSiPM(i) != nullptr && particle_name == "opticalphoton" ) {
 			aStep->GetTrack()->SetTrackStatus(fStopAndKill);
-			//G4cout << i << G4endl;
-			//G4cout << detectorConstruction->GetSiPM(i)->GetName() << G4endl;
 
 			G4int GetCopyNumber0 = touchable->GetCopyNumber(0);
 			G4int GetCopyNumber1 = touchable->GetCopyNumber(1);
-			G4int GetCopyNumber2 = touchable->GetCopyNumber(2);
-			G4int GetCopyNumber3 = touchable->GetHistory()->GetTopReplicaNo();
-			G4cout << volume->GetName() << G4endl;
-			G4cout << "CopyNb0 =" << GetCopyNumber0 << G4endl;
-			G4cout << "CopyNb1 =" << GetCopyNumber1 << G4endl;
-			G4cout << "CopyNb2 =" << GetCopyNumber2 << G4endl;
-			G4cout << "CopyNb3 =" << GetCopyNumber3 << G4endl;
+			G4double Energy = aStep->GetPostStepPoint()->GetKineticEnergy() / (1 * eV);
+			G4double WaveLength = 1242 / Energy;//nm
+			G4double SiPMEff = GetEfficiency(WaveLength);
+			G4double rnd = G4UniformRand();
+			if (rnd < SiPMEff) {
+				PENEvent->AddToSiPMSignal(GetCopyNumber1, GetCopyNumber0);
+			}
 			PENEvent->AddToSiPM(GetCopyNumber1, GetCopyNumber0);
+			PENEvent->CountTotalSiPMPhoton(1);
+		}
+	}
+
+	for (int j = 0; j < 5; j++) {
+		if (volume == detectorConstruction->GetContainerSiPM(j) && detectorConstruction->GetContainerSiPM(j) != nullptr && particle_name == "opticalphoton") {
+			aStep->GetTrack()->SetTrackStatus(fStopAndKill);
+
+			G4int GetCopyNumber0 = touchable->GetCopyNumber(0);
+			G4int GetCopyNumber1 = touchable->GetCopyNumber(1);
+			G4double Energy = aStep->GetPostStepPoint()->GetKineticEnergy() / (1 * eV);
+			G4double WaveLength = 1242 / Energy;//nm
+			G4double SiPMEff = GetEfficiency(WaveLength);
+			G4double rnd = G4UniformRand();
+			if (rnd < SiPMEff) {
+				PENEvent->AddToContainerSiPMSignal(GetCopyNumber1, GetCopyNumber0);
+			}
+			PENEvent->AddToContainerSiPM(GetCopyNumber1, GetCopyNumber0);
 			PENEvent->CountTotalSiPMPhoton(1);
 		}
 	}
@@ -119,3 +136,16 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+G4double PENSteppingAction::GetEfficiency(G4double wavelength) {
+	G4double eff;
+	if (wavelength > 400 && wavelength <= 900) {
+		eff = 0.5 - (wavelength - 400 * nm) / 1000;
+	}
+	else if (wavelength > 100 && wavelength <= 400) {
+		eff = (wavelength - 100) * 5 / 3000;
+	}
+	else {
+		eff = 0;
+	}
+	return eff;
+}

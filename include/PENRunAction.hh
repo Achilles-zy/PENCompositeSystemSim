@@ -47,6 +47,9 @@ class PENRunAction : public G4UserRunAction
 	inline	void CountVetoEvent() {
 		VetoEventCount += 1;
 	}
+	inline	void CountVetoEvent_0() {
+		VetoEventCount_0 += 1;
+	}
 	inline	void CountVetoEvent_1() {
 		VetoEventCount_1 += 1;
 	}
@@ -88,6 +91,7 @@ private:
 	G4Accumulable<G4int> SiPMEventCount;
 
 	G4Accumulable<G4int> VetoEventCount;
+	G4Accumulable<G4int> VetoEventCount_0;
 	G4Accumulable<G4int> VetoEventCount_1;
 	G4Accumulable<G4int> VetoEventCount_2;
 	G4Accumulable<G4int> VetoEventCount_3;
