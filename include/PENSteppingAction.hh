@@ -27,6 +27,7 @@ class PENSteppingAction : public G4UserSteppingAction
     PENEventAction*      PENEvent;
     PENRunAction* PENRun;
     G4int SignalSiPMCount;
+    G4int ContainerSignalSiPMCount;
     G4bool EnableAcc;
 
 };

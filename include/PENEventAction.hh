@@ -77,6 +77,7 @@ class PENEventAction : public G4UserEventAction
     G4int ID;
 	G4int TotalSiPMPhotonCount;
     G4int EscapedPhotonCount;
+    G4double EnergyThreshold;
     
 	G4bool ifSiPM;
 	G4bool ifBulk;

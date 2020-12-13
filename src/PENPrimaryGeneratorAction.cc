@@ -291,15 +291,16 @@ void PENPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		}
 
 		else if (SrcType == "SingleWire") {
+		G4ThreeVector WirePosIni = fDetCons->GetWirePos();
 		G4ThreeVector CentCoord;
 		G4double zCoord;
 		if (ImprintID % 2 == 0) {
 			zCoord = -(ImprintID / 2 - 1) * 65 - 32.5;
-			CentCoord = G4ThreeVector(0, 0, zCoord * mm);
+			CentCoord = G4ThreeVector(0, 0, zCoord * mm) + WirePosIni;
 		}
 		if (ImprintID % 2 == 1) {
 			zCoord = (ImprintID - 1) / 2 * 65 + 32.5;
-			CentCoord = G4ThreeVector(0, 0, zCoord * mm);
+			CentCoord = G4ThreeVector(0, 0, zCoord * mm) + WirePosIni;
 		}
 		G4double Radius = fDetCons->GetWireRadius();
 		G4double Length = fDetCons->GetPENShellLength();

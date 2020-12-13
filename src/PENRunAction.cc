@@ -39,7 +39,6 @@ PENRunAction::PENRunAction(PENPrimaryGeneratorAction* gen, PENDetectorConstructi
   //analysisManager->CreateH1("EdepBulk1", "Edep in Bulk", 200, 0 * keV, 2500 * keV);
   //analysisManager->CreateH1("EdepBulk2", "Edep in Bulk", 200, 2000 * keV, 2100 * keV);
 
-
   analysisManager->CreateNtuple("RunRes", "EventCount");
   analysisManager->CreateNtupleIColumn(0, "VetoCount");
   analysisManager->CreateNtupleIColumn(0, "SiPMCount");
@@ -60,7 +59,8 @@ PENRunAction::PENRunAction(PENPrimaryGeneratorAction* gen, PENDetectorConstructi
 
   analysisManager->CreateNtuple("EdepBulk", "Edep in Bulk");
   analysisManager->CreateNtupleDColumn(2, "Edep");
-  //analysisManager->CreateNtupleIColumn(1, "SiPMPhotonCount");
+
+  analysisManager->GetFirstNtupleId();
   analysisManager->FinishNtuple(2);
   //analysisManager->SetFirstNtupleId(0);
 

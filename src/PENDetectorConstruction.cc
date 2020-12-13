@@ -647,7 +647,6 @@ G4VPhysicalVolume* PENDetectorConstruction::Construct()
 }
 
 G4LogicalVolume* PENDetectorConstruction::ConstructBEGe() {
-
 	//flatBEGe
 	G4bool checkOverlaps = true;
 	G4double GeChamfer = 2. * mm;
