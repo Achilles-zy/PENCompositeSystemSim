@@ -59,10 +59,7 @@ PENRunAction::PENRunAction(PENPrimaryGeneratorAction* gen, PENDetectorConstructi
 
   analysisManager->CreateNtuple("EdepBulk", "Edep in Bulk");
   analysisManager->CreateNtupleDColumn(2, "Edep");
-
-  analysisManager->GetFirstNtupleId();
   analysisManager->FinishNtuple(2);
-  //analysisManager->SetFirstNtupleId(0);
 
   G4AccumulableManager* accumulableManager = G4AccumulableManager::Instance();
   accumulableManager->RegisterAccumulable(SiPMEventCount);
