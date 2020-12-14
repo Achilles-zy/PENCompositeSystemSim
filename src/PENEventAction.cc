@@ -42,7 +42,7 @@ PENEventAction::PENEventAction(PENRunAction* runaction)
 	SignalSiPMCount_2 = 0;
 	SignalSiPMCount_3 = 0;
 	SignalSiPMCount_4 = 0;
-	EnergyThreshold = 10 * eV;
+	EnergyThreshold = 160 * eV;
 	RowNb = sizeof(SiPMPhotonCount) / sizeof(SiPMPhotonCount[0]);
 	ColumnNb = sizeof(SiPMPhotonCount[0]) / sizeof(SiPMPhotonCount[0][0]);
 	ContainerRowNb = sizeof(ContainerSiPMPhotonCount) / sizeof(ContainerSiPMPhotonCount[0]);
@@ -188,7 +188,7 @@ void PENEventAction::EndOfEventAction(const G4Event* evt)
 		run->CountDetectableEvent();
 	}
 
-	if (ifDetectable == true && edepBulk > 0) {
+	if (ifDetectable == true && edepBulk > EnergyThreshold) {
 		run->CountVetoPossibleEvent();
 	}
 

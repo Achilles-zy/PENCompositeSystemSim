@@ -96,12 +96,14 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 	for (int i = 0; i < 5; i++) {
 		if (volume == detectorConstruction->GetSiPM(i) && detectorConstruction->GetSiPM(i) != nullptr && particle_name == "opticalphoton" ) {
 			aStep->GetTrack()->SetTrackStatus(fStopAndKill);
-
+			PENEvent->DetectableTrue();
 			G4int GetCopyNumber0 = touchable->GetCopyNumber(0);
 			G4int GetCopyNumber1 = touchable->GetCopyNumber(1);
 			G4double Energy = aStep->GetPostStepPoint()->GetKineticEnergy() / (1 * eV);
 			G4double WaveLength = 1242 / Energy;//nm
 			G4double SiPMEff = GetEfficiency(WaveLength);
+			//G4cout << "Wavelength = " << WaveLength << " nm" << G4endl;	
+			//G4cout << "Efficiency = " << SiPMEff  << G4endl;
 			G4double rnd = G4UniformRand();
 			if (rnd < SiPMEff) {
 				PENEvent->AddToSiPMSignal(GetCopyNumber1, GetCopyNumber0);
@@ -153,7 +155,7 @@ void PENSteppingAction::UserSteppingAction(const G4Step* aStep)
 G4double PENSteppingAction::GetEfficiency(G4double wavelength) {
 	G4double eff;
 	if (wavelength > 400 && wavelength <= 900) {
-		eff = 0.5 - (wavelength - 400 * nm) / 1000;
+		eff = 0.5 - (wavelength - 400) / 1000;
 	}
 	else if (wavelength > 100 && wavelength <= 400) {
 		eff = (wavelength - 100) * 5 / 3000;
